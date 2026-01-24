@@ -1,0 +1,151 @@
+.notification-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.notification-toast {
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(10, 10, 15, 0.95);
+  border: 1px solid rgba(100, 108, 255, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 320px;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  animation: slideInRight 0.3s ease-out;
+  transition: all 0.2s ease;
+}
+
+.notification-toast:hover {
+  transform: translateX(-4px);
+  box-shadow: 0 12px 40px rgba(100, 108, 255, 0.3);
+}
+
+.notification-message {
+  background: linear-gradient(135deg, #646cff, #41d1ff);
+  border-left: 3px solid #646cff;
+}
+
+.notification-friend_request {
+  background: linear-gradient(135deg, #a855f7, #ff00e6);
+  border-left: 3px solid #a855f7;
+}
+
+.notification-friend_accepted {
+  background: linear-gradient(135deg, #34c759, #30d158);
+  border-left: 3px solid #34c759;
+}
+
+.notification-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f4f3ec;
+  margin-bottom: 4px;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: rgba(244, 243, 236, 0.7);
+  line-height: 1.4;
+}
+
+.notification-close {
+  background: transparent;
+  border: none;
+  color: rgba(244, 243, 236, 0.5);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.notification-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f4f3ec;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Badge styles */
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #ff4444, #ff0066);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.5);
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(255, 68, 68, 0.5);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.7);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .notification-container {
+    top: 70px;
+    right: 12px;
+    left: 12px;
+  }
+
+  .notification-toast {
+    min-width: auto;
+    max-width: none;
+  }
+}
