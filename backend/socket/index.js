@@ -1,6 +1,8 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const notificationsController = require('../controllers/notifications');
+const { startDeadlineChecker } = require('../utils/deadlineChecker');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'unsecretfoarteputernic123!';
 
@@ -41,6 +43,9 @@ function initializeSocket(server) {
 
     // Add user to online users map
     onlineUsers.set(userId, socket.id);
+
+    // Join a personal room for notifications
+    socket.join(`user-${userId}`);
 
     // Update last_seen to now in database
     try {
@@ -87,6 +92,11 @@ function initializeSocket(server) {
           created_at: new Date().toISOString()
         };
 
+        // Get sender info
+        const senderStmt = db.prepare('SELECT username FROM users WHERE id = ?');
+        const sender = senderStmt.get(userId);
+
+        // Create notification for recipient
         // Send to recipient if online
         const recipientSocketId = onlineUsers.get(recipientId);
         if (recipientSocketId) {
@@ -133,6 +143,58 @@ function initializeSocket(server) {
     });
 
     socket.on('room-message', (message) => {
+      // Check for @mentions in the message
+      const mentionRegex = /@(\w+)/g;
+      const mentions = [];
+      let match;
+      
+      while ((match = mentionRegex.exec(message.content)) !== null) {
+        mentions.push(match[1]); // Extract username without @
+      }
+
+      // Get room info
+      const roomStmt = db.prepare('SELECT name FROM rooms WHERE id = ?');
+      const room = roomStmt.get(message.room_id);
+
+      // Get sender info
+      const senderStmt = db.prepare('SELECT username FROM users WHERE id = ?');
+      const sender = senderStmt.get(message.user_id);
+
+      // Process mentions
+      if (mentions.length > 0) {
+        mentions.forEach(mentionedUsername => {
+          // Get mentioned user
+          const userStmt = db.prepare('SELECT id FROM users WHERE username = ?');
+          const mentionedUser = userStmt.get(mentionedUsername);
+
+          if (mentionedUser && mentionedUser.id !== message.user_id) {
+            // Create notification
+            const notifId = notificationsController.createNotification(
+              mentionedUser.id,
+              'MENTION',
+              'You were mentioned',
+              `${sender?.username || 'Someone'} mentioned you in ${room?.name || 'a room'}`,
+              `/rooms?roomId=${message.room_id}`,
+              message.user_id,
+              message.id
+            );
+
+            // Send real-time notification
+            if (notifId) {
+              io.to(`user-${mentionedUser.id}`).emit('new_notification', {
+                id: notifId,
+                type: 'MENTION',
+                title: 'You were mentioned',
+                message: `${sender?.username || 'Someone'} mentioned you in ${room?.name || 'a room'}`,
+                link: `/rooms?roomId=${message.room_id}`,
+                related_username: sender?.username,
+                created_at: new Date().toISOString()
+              });
+            }
+          }
+        });
+      }
+
       // Broadcast message to all users in the room except sender
       socket.to(`room_${message.room_id}`).emit('room-message', message);
     });
@@ -145,6 +207,56 @@ function initializeSocket(server) {
     socket.on('room-stop-typing', (data) => {
       const { roomId } = data;
       socket.to(`room_${roomId}`).emit('room-stop-typing', { userId });
+    });
+
+    // Voice chat WebRTC signaling events
+    socket.on('voice-join-room', (data) => {
+      const { roomId } = data;
+      console.log(`User ${userId} joining voice chat in room ${roomId}`);
+      
+      // Join voice channel
+      socket.join(`voice_${roomId}`);
+      
+      // Notify others in the room that a new user joined voice
+      socket.to(`voice_${roomId}`).emit('voice-user-joined', {
+        userId,
+        username: data.username,
+        profilePicture: data.profilePicture
+      });
+    });
+
+    socket.on('voice-leave-room', (data) => {
+      const { roomId } = data;
+      console.log(`User ${userId} leaving voice chat in room ${roomId}`);
+      
+      // Leave voice channel
+      socket.leave(`voice_${roomId}`);
+      
+      // Notify others that user left voice
+      socket.to(`voice_${roomId}`).emit('voice-user-left', { userId });
+    });
+
+    socket.on('voice-signal', (data) => {
+      const { roomId, targetUserId, signal } = data;
+      
+      // Forward the signal to the target user
+      const targetSocketId = onlineUsers.get(targetUserId);
+      if (targetSocketId) {
+        io.to(targetSocketId).emit('voice-signal', {
+          fromUserId: userId,
+          signal
+        });
+      }
+    });
+
+    socket.on('voice-mute-toggle', (data) => {
+      const { roomId, isMuted } = data;
+      
+      // Broadcast mute status to others in voice room
+      socket.to(`voice_${roomId}`).emit('voice-user-muted', {
+        userId,
+        isMuted
+      });
     });
 
     // Handle disconnect
@@ -167,6 +279,17 @@ function initializeSocket(server) {
   });
 
   ioInstance = io;
+  
+  // Pass io instance to controllers that need it
+  const tasksController = require('../controllers/tasks');
+  tasksController.setSocketInstance(io);
+
+  const postsController = require('../controllers/posts');
+  postsController.setSocketInstance(io);
+
+  // Start deadline checker
+  startDeadlineChecker(io);
+
   return io;
 }
 

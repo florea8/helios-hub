@@ -1,27 +1,46 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../hooks/useNotifications';
+import NotificationPanel from '../components/NotificationPanel';
 import '../styles/Profile.css';
 
 const Profile = () => {
   const { user, logout, updateUser } = useAuth();
-  const navigate = useNavigate();
+  const { getTotalUnreadMessages, pendingFriendRequests } = useNotifications();
   const [profilePicture, setProfilePicture] = useState(user?.profile_picture || null);
-  const [workExperience, setWorkExperience] = useState([]);
-  const [skills, setSkills] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [scrollY, setScrollY] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
+  
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    // If it's already a complete URL or base64 data
+    if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
+    // If it's a relative path, prepend the API URL
+    return `${API_URL}/${imagePath}`;
+  };
 
-  // Work Experience form state
-  const [expForm, setExpForm] = useState({ company: '', position: '', description: '', start_date: '', end_date: '', is_current: false });
-  const [showExpForm, setShowExpForm] = useState(false);
-
-  // Skills form state
-  const [skillForm, setSkillForm] = useState({ skill_name: '', proficiency: 'INTERMEDIATE' });
-  const [showSkillForm, setShowSkillForm] = useState(false);
+  // Profile form state
+  const [profileForm, setProfileForm] = useState({
+    bio: user?.bio || '',
+    location: user?.location || '',
+    website: user?.website || '',
+    github_url: user?.github_url || '',
+    linkedin_url: user?.linkedin_url || '',
+    twitter_url: user?.twitter_url || '',
+    is_profile_public: user?.is_profile_public !== undefined ? user.is_profile_public : true,
+    experience: user?.experience || '',
+    skills: user?.skills || ''
+  });
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('posts'); // 'posts', 'rooms'
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -29,156 +48,107 @@ const Profile = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const fetchPosts = useCallback(async () => {
+    try {
+      const response = await api.get('/api/posts');
+      // Filter posts created by current user
+      const allPosts = response.data.posts || [];
+      const userPosts = allPosts.filter(post => post.user_id === user?.id);
+      setPosts(userPosts);
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+    }
+  }, [user?.id]);
+
+  const fetchRooms = useCallback(async () => {
+    try {
+      const response = await api.get('/api/rooms');
+      // Get all room IDs to check membership
+      const allRooms = response.data;
+      
+      // Filter rooms where user is a member (created_by or check via member_count)
+      // We'll need to check each room for membership
+      const membershipChecks = await Promise.all(
+        allRooms.map(async (room) => {
+          try {
+            const memberCheck = await api.get(`/api/rooms/${room.id}/check-membership`);
+            return { ...room, isMember: memberCheck.data.isMember };
+          // eslint-disable-next-line no-unused-vars
+          } catch (err) {
+            return { ...room, isMember: false };
+          }
+        })
+      );
+      
+      // Filter only rooms where user is a member
+      const userRooms = membershipChecks.filter(room => room.isMember);
+      setRooms(userRooms);
+    } catch (err) {
+      console.error('Error fetching rooms:', err);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
   useEffect(() => {
     if (user) {
-      fetchWorkExperience();
-      fetchSkills();
+      fetchPosts();
+      fetchRooms();
+      // Update profile form with user data
+      setProfileForm({
+        bio: user.bio || '',
+        location: user.location || '',
+        website: user.website || '',
+        github_url: user.github_url || '',
+        linkedin_url: user.linkedin_url || '',
+        twitter_url: user.twitter_url || '',
+        is_profile_public: user.is_profile_public !== undefined ? user.is_profile_public : true,
+        experience: user.experience || '',
+        skills: user.skills || ''
+      });
     }
-  }, [user]);
+  }, [user, fetchPosts, fetchRooms]);
 
-  const fetchWorkExperience = async () => {
-    try {
-      const res = await api.get('/api/profile/work-experience');
-      setWorkExperience(res.data);
-    } catch (err) {
-      console.error('Failed to fetch work experience:', err);
-    }
-  };
-
-  const fetchSkills = async () => {
-    try {
-      const res = await api.get('/api/profile/skills');
-      setSkills(res.data);
-    } catch (err) {
-      console.error('Failed to fetch skills:', err);
-    }
+  const handleProfilePictureClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleProfilePictureChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+
     setLoading(true);
-    const reader = new FileReader();
-    
-    reader.onload = async (event) => {
-      try {
-        const base64String = event.target?.result;
-        const res = await api.post('/api/auth/upload-profile-picture', { file: base64String });
-        setProfilePicture(res.data.profile_picture);
-        updateUser({ profile_picture: res.data.profile_picture });
-        setError('');
-      } catch (err) {
-        setError('Failed to upload profile picture: ' + (err.response?.data?.message || err.message));
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    reader.onerror = () => {
-      setError('Failed to read file');
-      setLoading(false);
-    };
-    
-    reader.readAsDataURL(file);
-  };
-
-  const handleAddWorkExperience = async () => {
-    if (!expForm.company.trim() || !expForm.position.trim()) {
-      setError('Company and position are required');
-      return;
-    }
-
     try {
-      setLoading(true);
-      await api.post('/api/profile/work-experience', expForm);
-      setExpForm({ company: '', position: '', description: '', start_date: '', end_date: '', is_current: false });
-      setShowExpForm(false);
-      fetchWorkExperience();
-      setError('');
+      const response = await api.post('/api/profile/picture', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setProfilePicture(response.data.profile_picture);
+      updateUser({ ...user, profile_picture: response.data.profile_picture });
     } catch (err) {
-      setError('Failed to add work experience');
-      console.error(err);
+      setError(err.response?.data?.error || 'Failed to update profile picture');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteWorkExperience = async (id) => {
-    if (!window.confirm('Delete this experience?')) return;
-
+  const handleUpdateProfile = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      await api.delete(`/api/profile/work-experience/${id}`);
-      fetchWorkExperience();
+      await api.put('/api/profile/update', profileForm);
+      updateUser({ ...user, ...profileForm });
+      setShowProfileForm(false);
       setError('');
     } catch (err) {
-      setError('Failed to delete work experience');
-      console.error(err);
+      setError(err.response?.data?.error || 'Failed to update profile');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAddSkill = async () => {
-    if (!skillForm.skill_name.trim()) {
-      setError('Skill name is required');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await api.post('/api/profile/skills', skillForm);
-      setSkillForm({ skill_name: '', proficiency: 'INTERMEDIATE' });
-      setShowSkillForm(false);
-      fetchSkills();
-      setError('');
-    } catch (err) {
-      if (err.response?.status === 409) {
-        setError('Skill already exists');
-      } else {
-        setError('Failed to add skill');
-      }
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteSkill = async (id) => {
-    if (!window.confirm('Delete this skill?')) return;
-
-    try {
-      setLoading(true);
-      await api.delete(`/api/profile/skills/${id}`);
-      fetchSkills();
-      setError('');
-    } catch (err) {
-      setError('Failed to delete skill');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getProficiencyColor = (proficiency) => {
-    switch (proficiency) {
-      case 'BEGINNER':
-        return '#ff6b6b';
-      case 'INTERMEDIATE':
-        return '#ffd93d';
-      case 'ADVANCED':
-        return '#6bcf7f';
-      case 'EXPERT':
-        return '#646cff';
-      default:
-        return '#a0a0a0';
     }
   };
 
   return (
-    <div className="profile-container">
+    <div className="home-container">
       <div className="atmosphere-bg">
         <div className="gradient-mesh"></div>
         <div className="grid-pattern"></div>
@@ -201,129 +171,220 @@ const Profile = () => {
             <span className="brand-name">Helios</span>
           </Link>
           <nav className="main-nav">
-            {user ? (
-              <>
-                <Link to="/dashboard" className="nav-item">Dashboard</Link>
-                <Link to="/posts" className="nav-item">Posts</Link>
-                <Link to="/rooms" className="nav-item">Rooms</Link>
-                <Link to="/friends" className="nav-item">Friends</Link>
-                <Link to="/profile" className="nav-item nav-active">Profile</Link>
-                <Link to="/settings" className="nav-item">Settings</Link>
-                <button onClick={logout} className="nav-item nav-logout">Logout</button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="nav-item">Login</Link>
-                <Link to="/register" className="nav-cta">Get Started</Link>
-              </>
-            )}
+            <Link to="/dashboard" className="nav-item">Dashboard</Link>
+            <Link to="/rooms" className="nav-item">Rooms</Link>
+            <Link to="/friends" className="nav-item nav-item-with-badge">
+              Friends
+              {(getTotalUnreadMessages() > 0 || pendingFriendRequests > 0) && (
+                <span className="notification-badge">
+                  {getTotalUnreadMessages() + pendingFriendRequests}
+                </span>
+              )}
+            </Link>
+            <Link to="/profile" className="nav-item nav-active">Profile</Link>
+            <Link to="/settings" className="nav-item">Settings</Link>
+            <NotificationPanel />
+            <button onClick={logout} className="nav-item nav-logout">Logout</button>
           </nav>
         </div>
       </header>
 
-      <main className="profile-main">
-        <div className="profile-layout">
-          {/* Left Sidebar */}
-          <aside className="profile-sidebar">
-            <div className="profile-card">
-              <div className="profile-picture-wrapper">
-                <div className="profile-picture">
-                  {profilePicture ? (
-                    <img src={`http://localhost:5000/${profilePicture}`} alt={user?.username} />
-                  ) : (
-                    <div className="profile-picture-placeholder">
-                      {user?.username?.charAt(0).toUpperCase() || 'U'}
-                    </div>
-                  )}
+      <section className="dashboard-wrapper">
+        <div className="dashboard-layout">
+          {/* Sidebar */}
+          <aside className="sidebar-left">
+            <div className="sidebar-section">
+              <div className="profile-card">
+              <div className="profile-picture-container">
+                <img
+                  src={getImageUrl(profilePicture) || `https://ui-avatars.com/api/?name=${user?.username}&background=646cff&color=fff&size=150`}
+                  alt={user?.username}
+                  className="profile-picture"
+                  onClick={handleProfilePictureClick}
+                  style={{ cursor: 'pointer' }}
+                />
+                <div className="picture-overlay" onClick={handleProfilePictureClick}>
+                  Change Photo
                 </div>
-                <button
-                  className="profile-upload-btn"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={loading}
-                  title="Upload profile picture"
-                >
-                  📷
-                </button>
                 <input
-                  ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  ref={fileInputRef}
                   onChange={handleProfilePictureChange}
+                  accept="image/*"
                   style={{ display: 'none' }}
                 />
               </div>
 
               <h2 className="profile-username">{user?.username}</h2>
               <p className="profile-email">{user?.email}</p>
-            </div>
 
-            {/* Work Experience Section */}
-            <div className="profile-section">
-              <div className="section-header">
-                <h3 className="section-title">Work Experience</h3>
-                <button
-                  className="section-add-btn"
-                  onClick={() => setShowExpForm(!showExpForm)}
-                >
-                  +
-                </button>
+              {/* Points Display */}
+              <div className="profile-points-section">
+                <div className="points-badge">
+                  <span className="points-value">{user?.points || 0}</span>
+                  <span className="points-label">Points</span>
+                </div>
               </div>
 
-              {showExpForm && (
-                <div className="form-container">
+              {/* Bio Section */}
+              <div className="profile-bio-section">
+                {profileForm.bio ? (
+                  <p className="profile-bio">{profileForm.bio}</p>
+                ) : (
+                  <p className="profile-bio-empty">No bio yet</p>
+                )}
+              </div>
+
+              {/* Social Links */}
+              {(profileForm.location || profileForm.website || profileForm.github_url || profileForm.linkedin_url || profileForm.twitter_url) && (
+                <div className="social-links">
+                  {profileForm.location && (
+                    <div className="social-link">
+                      <span>{profileForm.location}</span>
+                    </div>
+                  )}
+                  {profileForm.website && (
+                    <a href={profileForm.website} target="_blank" rel="noopener noreferrer" className="social-link">
+                      Website
+                    </a>
+                  )}
+                  {profileForm.github_url && (
+                    <a href={profileForm.github_url} target="_blank" rel="noopener noreferrer" className="social-link">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                      </svg>
+                      GitHub
+                    </a>
+                  )}
+                  {profileForm.linkedin_url && (
+                    <a href={profileForm.linkedin_url} target="_blank" rel="noopener noreferrer" className="social-link">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                      </svg>
+                      LinkedIn
+                    </a>
+                  )}
+                  {profileForm.twitter_url && (
+                    <a href={profileForm.twitter_url} target="_blank" rel="noopener noreferrer" className="social-link">
+                      Twitter
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* Experience Section */}
+              <div className="sidebar-experience-section">
+                <h3 className="sidebar-section-title">Experience</h3>
+                {profileForm.experience ? (
+                  <p className="sidebar-text-content">{profileForm.experience}</p>
+                ) : (
+                  <p className="profile-bio-empty">No experience added yet</p>
+                )}
+              </div>
+
+              {/* Skills Section */}
+              <div className="sidebar-skills-section">
+                <h3 className="sidebar-section-title">Skills</h3>
+                {profileForm.skills ? (
+                  <p className="sidebar-text-content">{profileForm.skills}</p>
+                ) : (
+                  <p className="profile-bio-empty">No skills added yet</p>
+                )}
+              </div>
+
+              {/* Privacy Toggle */}
+              <div className="privacy-toggle">
+                <label className="checkbox-label">
                   <input
-                    type="text"
-                    placeholder="Company"
-                    value={expForm.company}
-                    onChange={(e) => setExpForm({ ...expForm, company: e.target.value })}
-                    className="form-input"
+                    type="checkbox"
+                    checked={profileForm.is_profile_public}
+                    onChange={(e) => {
+                      const newValue = e.target.checked;
+                      setProfileForm({ ...profileForm, is_profile_public: newValue });
+                      api.put('/api/profile/update', { ...profileForm, is_profile_public: newValue });
+                    }}
+                  />
+                  <span>{profileForm.is_profile_public ? 'Public Profile' : 'Private Profile'}</span>
+                </label>
+              </div>
+
+              {/* Edit Profile Button */}
+              <button
+                className="btn-primary edit-profile-btn"
+                onClick={() => setShowProfileForm(!showProfileForm)}
+              >
+                Edit Profile
+              </button>
+
+              {showProfileForm && (
+                <div className="form-container profile-edit-form">
+                  <textarea
+                    placeholder="Bio / About"
+                    value={profileForm.bio}
+                    onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
+                    className="form-textarea"
+                    rows="4"
                   />
                   <input
                     type="text"
-                    placeholder="Position"
-                    value={expForm.position}
-                    onChange={(e) => setExpForm({ ...expForm, position: e.target.value })}
+                    placeholder="Location"
+                    value={profileForm.location}
+                    onChange={(e) => setProfileForm({ ...profileForm, location: e.target.value })}
+                    className="form-input"
+                  />
+                  <input
+                    type="url"
+                    placeholder="Website URL"
+                    value={profileForm.website}
+                    onChange={(e) => setProfileForm({ ...profileForm, website: e.target.value })}
+                    className="form-input"
+                  />
+                  <input
+                    type="url"
+                    placeholder="GitHub URL"
+                    value={profileForm.github_url}
+                    onChange={(e) => setProfileForm({ ...profileForm, github_url: e.target.value })}
+                    className="form-input"
+                  />
+                  <input
+                    type="url"
+                    placeholder="LinkedIn URL"
+                    value={profileForm.linkedin_url}
+                    onChange={(e) => setProfileForm({ ...profileForm, linkedin_url: e.target.value })}
+                    className="form-input"
+                  />
+                  <input
+                    type="url"
+                    placeholder="Twitter/X URL"
+                    value={profileForm.twitter_url}
+                    onChange={(e) => setProfileForm({ ...profileForm, twitter_url: e.target.value })}
                     className="form-input"
                   />
                   <textarea
-                    placeholder="Description"
-                    value={expForm.description}
-                    onChange={(e) => setExpForm({ ...expForm, description: e.target.value })}
+                    placeholder="Experiență (ex: 3 ani dezvoltator web, 2 ani designer UX)"
+                    value={profileForm.experience}
+                    onChange={(e) => setProfileForm({ ...profileForm, experience: e.target.value })}
                     className="form-textarea"
                     rows="3"
                   />
-                  <input
-                    type="date"
-                    value={expForm.start_date}
-                    onChange={(e) => setExpForm({ ...expForm, start_date: e.target.value })}
-                    className="form-input"
+                  <textarea
+                    placeholder="Abilități (ex: React, Node.js, Python, Design)"
+                    value={profileForm.skills}
+                    onChange={(e) => setProfileForm({ ...profileForm, skills: e.target.value })}
+                    className="form-textarea"
+                    rows="3"
                   />
-                  <input
-                    type="date"
-                    value={expForm.end_date}
-                    onChange={(e) => setExpForm({ ...expForm, end_date: e.target.value })}
-                    className="form-input"
-                    disabled={expForm.is_current}
-                  />
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={expForm.is_current}
-                      onChange={(e) => setExpForm({ ...expForm, is_current: e.target.checked, end_date: e.target.checked ? '' : expForm.end_date })}
-                    />
-                    Currently working here
-                  </label>
                   <div className="form-buttons">
                     <button
                       className="btn-primary"
-                      onClick={handleAddWorkExperience}
+                      onClick={handleUpdateProfile}
                       disabled={loading}
                     >
-                      Add Experience
+                      Save Changes
                     </button>
                     <button
                       className="btn-secondary"
-                      onClick={() => setShowExpForm(false)}
+                      onClick={() => setShowProfileForm(false)}
                       disabled={loading}
                     >
                       Cancel
@@ -331,141 +392,102 @@ const Profile = () => {
                   </div>
                 </div>
               )}
-
-              <div className="experience-list">
-                {workExperience.length > 0 ? (
-                  workExperience.map((exp) => (
-                    <div key={exp.id} className="experience-item">
-                      <div className="experience-header">
-                        <h4 className="experience-position">{exp.position}</h4>
-                        <button
-                          className="item-delete-btn"
-                          onClick={() => handleDeleteWorkExperience(exp.id)}
-                          title="Delete"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <p className="experience-company">{exp.company}</p>
-                      {exp.description && <p className="experience-description">{exp.description}</p>}
-                      <p className="experience-dates">
-                        {exp.start_date} {exp.end_date ? `- ${exp.end_date}` : exp.is_current ? '- Present' : ''}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="empty-message">No work experience yet</p>
-                )}
-              </div>
-            </div>
-
-            {/* Skills Section */}
-            <div className="profile-section">
-              <div className="section-header">
-                <h3 className="section-title">Skills</h3>
-                <button
-                  className="section-add-btn"
-                  onClick={() => setShowSkillForm(!showSkillForm)}
-                >
-                  +
-                </button>
-              </div>
-
-              {showSkillForm && (
-                <div className="form-container">
-                  <input
-                    type="text"
-                    placeholder="Skill name"
-                    value={skillForm.skill_name}
-                    onChange={(e) => setSkillForm({ ...skillForm, skill_name: e.target.value })}
-                    className="form-input"
-                  />
-                  <select
-                    value={skillForm.proficiency}
-                    onChange={(e) => setSkillForm({ ...skillForm, proficiency: e.target.value })}
-                    className="form-select"
-                  >
-                    <option value="BEGINNER">Beginner</option>
-                    <option value="INTERMEDIATE">Intermediate</option>
-                    <option value="ADVANCED">Advanced</option>
-                    <option value="EXPERT">Expert</option>
-                  </select>
-                  <div className="form-buttons">
-                    <button
-                      className="btn-primary"
-                      onClick={handleAddSkill}
-                      disabled={loading}
-                    >
-                      Add Skill
-                    </button>
-                    <button
-                      className="btn-secondary"
-                      onClick={() => setShowSkillForm(false)}
-                      disabled={loading}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="skills-list">
-                {skills.length > 0 ? (
-                  skills.map((skill) => (
-                    <div key={skill.id} className="skill-item">
-                      <div className="skill-info">
-                        <span className="skill-name">{skill.skill_name}</span>
-                        <span className="skill-badge" style={{ backgroundColor: getProficiencyColor(skill.proficiency) }}>
-                          {skill.proficiency}
-                        </span>
-                      </div>
-                      <button
-                        className="item-delete-btn"
-                        onClick={() => handleDeleteSkill(skill.id)}
-                        title="Delete"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="empty-message">No skills yet</p>
-                )}
               </div>
             </div>
           </aside>
 
           {/* Right Content Area */}
-          <section className="profile-content">
-            <div className="profile-info-card">
-              <h3>Profile Overview</h3>
-              <div className="info-grid">
-                <div className="info-item">
-                  <span className="info-label">Member since</span>
-                  <span className="info-value">
-                    {user?.created_at ? new Date(user.created_at).toLocaleDateString('ro-RO') : 'Unknown'}
-                  </span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">Experience Count</span>
-                  <span className="info-value">{workExperience.length}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">Skills Count</span>
-                  <span className="info-value">{skills.length}</span>
+          <section className="main-content">
+            {/* Tab Navigation */}
+            <div className="profile-tabs">
+              <button
+                className={`tab-button ${activeTab === 'posts' ? 'active' : ''}`}
+                onClick={() => setActiveTab('posts')}
+              >
+                My Posts
+              </button>
+              <button
+                className={`tab-button ${activeTab === 'rooms' ? 'active' : ''}`}
+                onClick={() => setActiveTab('rooms')}
+              >
+                My Rooms
+              </button>
+            </div>
+
+            {/* Posts Tab */}
+            {activeTab === 'posts' && (
+              <div className="tab-content">
+                <h3 className="section-subtitle">Your Posts ({posts.length})</h3>
+                <div className="activity-grid">
+                  {posts.length > 0 ? (
+                    posts.map((post) => (
+                      <Link to={`/posts/${post.id}`} key={post.id} className="activity-card">
+                        <div className="activity-card-header">
+                          <h4 className="activity-card-title">{post.title || 'Untitled Post'}</h4>
+                          <span className="activity-card-date">
+                            {new Date(post.created_at).toLocaleDateString('en-US')}
+                          </span>
+                        </div>
+                        {post.image && (
+                          <img 
+                            src={getImageUrl(post.image)} 
+                            alt={post.title || 'Post image'} 
+                            className="activity-card-image"
+                            style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px' }}
+                          />
+                        )}
+                        <p className="activity-card-content">{post.description?.substring(0, 150)}...</p>
+                        <div className="activity-card-meta">
+                          <span>{post.like_count || 0} likes</span>
+                          <span>{post.comment_count || 0} comments</span>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="empty-message">No posts created yet</p>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Rooms Tab */}
+            {activeTab === 'rooms' && (
+              <div className="tab-content">
+                <h3 className="section-subtitle">Your Rooms ({rooms.length})</h3>
+                <div className="activity-grid">
+                  {rooms.length > 0 ? (
+                    rooms.map((room) => (
+                      <Link to="/rooms" key={room.id} className="activity-card">
+                        <div className="activity-card-header">
+                          <h4 className="activity-card-title">{room.name}</h4>
+                          <span className="activity-card-date">
+                            {new Date(room.created_at).toLocaleDateString('en-US')}
+                          </span>
+                        </div>
+                        {room.description && (
+                          <p className="activity-card-content">{room.description?.substring(0, 150)}...</p>
+                        )}
+                        <div className="activity-card-meta">
+                          <span>{room.member_count || 0} members</span>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="empty-message">Not a member of any room yet</p>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
         </div>
 
         {error && (
           <div className="error-toast">
             {error}
-            <button onClick={() => setError('')} className="toast-close">✕</button>
+            <button onClick={() => setError('')} className="toast-close">×</button>
           </div>
         )}
-      </main>
+      </section>
     </div>
   );
 };

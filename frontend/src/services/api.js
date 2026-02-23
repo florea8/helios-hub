@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL
+  // Fallback to local backend if env var missing so buttons like "Create Room" keep working
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000'
 });
 
 api.interceptors.request.use(config => {

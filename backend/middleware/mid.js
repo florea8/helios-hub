@@ -1,13 +1,19 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const { AppError } = require('./errorHandler');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'unsecretfoarteputernic123!';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET must be defined in environment variables');
+}
 
 exports.authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader)
-    return res.status(401).json({ message: 'Token lipsă' });
+  if (!authHeader) {
+    return next(new AppError('Token lipsă', 401));
+  }
 
   const token = authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -24,7 +30,7 @@ exports.authenticate = (req, res, next) => {
     
     next();
   } catch (err) {
-    res.status(401).json({ message: 'Token invalid' });
+    return next(new AppError('Token invalid sau expirat', 401));
   }
 };
 

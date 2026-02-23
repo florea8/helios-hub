@@ -1,4 +1,12 @@
 const db = require('../config/db');
+const notificationsController = require('./notifications');
+
+// Get socket instance - will be set by socket/index.js
+let ioInstance = null;
+
+exports.setSocketInstance = (io) => {
+  ioInstance = io;
+};
 
 // CREATE POST
 exports.createPost = async (req, res) => {
@@ -34,6 +42,13 @@ exports.createPost = async (req, res) => {
       db.prepare("ALTER TABLE posts ADD COLUMN image TEXT").run();
     }
 
+    // Check if users table has points column
+    const usersTableInfo = db.prepare("PRAGMA table_info(users)").all();
+    const hasPoints = usersTableInfo.some(col => col.name === 'points');
+    if (!hasPoints) {
+      db.prepare("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0").run();
+    }
+
     const stmt = db.prepare('INSERT INTO posts (user_id, title, description, post_type, image) VALUES (?, ?, ?, ?, ?)');
     const result = stmt.run(userId, title || '', description, type, image || null);
 
@@ -47,8 +62,17 @@ exports.createPost = async (req, res) => {
 // GET ALL POSTS
 exports.getPosts = async (req, res) => {
   const userId = req.user?.id; // Optional if not authenticated
+  const { limit = 10, offset = 0 } = req.query;
+  
+  const limitNum = parseInt(limit);
+  const offsetNum = parseInt(offset);
 
   try {
+    // Get total count
+    const countStmt = db.prepare('SELECT COUNT(*) as total FROM posts');
+    const { total } = countStmt.get();
+
+    // Get paginated posts
     const stmt = db.prepare(`
       SELECT 
         p.*, 
@@ -60,10 +84,17 @@ exports.getPosts = async (req, res) => {
       FROM posts p 
       JOIN users u ON p.user_id = u.id 
       ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
     `);
-    const rows = userId ? stmt.all(userId) : stmt.all();
+    const rows = userId ? stmt.all(userId, limitNum, offsetNum) : stmt.all(limitNum, offsetNum);
 
-    res.json(rows);
+    res.json({
+      posts: rows,
+      total,
+      limit: limitNum,
+      offset: offsetNum,
+      hasMore: offsetNum + rows.length < total
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'DB error' });
@@ -198,8 +229,41 @@ exports.likePost = async (req, res) => {
     // Add like
     db.prepare('INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)').run(id, userId);
     
+    // Award 1 point to post author
+    if (post.user_id !== userId) {
+      db.prepare('UPDATE users SET points = points + 1 WHERE id = ?').run(post.user_id);
+    }
+    
     // Get updated like count
     const likeCount = db.prepare('SELECT COUNT(*) as count FROM post_likes WHERE post_id = ?').get(id).count;
+
+    // Create notification for post author (if not liking own post)
+    if (post.user_id !== userId) {
+      const liker = db.prepare('SELECT username FROM users WHERE id = ?').get(userId);
+      
+      const notifId = notificationsController.createNotification(
+        post.user_id,
+        'POST_LIKE',
+        'New Like',
+        `${liker?.username || 'Someone'} liked your post`,
+        `/posts/${id}`,
+        userId,
+        id
+      );
+
+      // Send real-time notification
+      if (ioInstance && notifId) {
+        ioInstance.to(`user-${post.user_id}`).emit('new_notification', {
+          id: notifId,
+          type: 'POST_LIKE',
+          title: 'New Like',
+          message: `${liker?.username || 'Someone'} liked your post`,
+          link: `/posts/${id}`,
+          related_username: liker?.username,
+          created_at: new Date().toISOString()
+        });
+      }
+    }
 
     res.json({ message: 'Post liked', like_count: likeCount });
   } catch (err) {
@@ -214,10 +278,18 @@ exports.unlikePost = async (req, res) => {
   const userId = req.user.id;
 
   try {
+    // Get post info before deleting like
+    const post = db.prepare('SELECT user_id FROM posts WHERE id = ?').get(id);
+    
     const result = db.prepare('DELETE FROM post_likes WHERE post_id = ? AND user_id = ?').run(id, userId);
     
     if (result.changes === 0) {
       return res.status(404).json({ message: 'Like not found' });
+    }
+
+    // Remove 1 point from post author (if not unliking own post)
+    if (post && post.user_id !== userId) {
+      db.prepare('UPDATE users SET points = GREATEST(points - 1, 0) WHERE id = ?').run(post.user_id);
     }
 
     // Get updated like count
@@ -274,6 +346,11 @@ exports.addComment = async (req, res) => {
     // Add comment
     const result = db.prepare('INSERT INTO post_comments (post_id, user_id, content) VALUES (?, ?, ?)').run(id, userId, content.trim());
     
+    // Award 2 points to post author for receiving a comment
+    if (post.user_id !== userId) {
+      db.prepare('UPDATE users SET points = points + 2 WHERE id = ?').run(post.user_id);
+    }
+    
     // Get the created comment with user info
     const comment = db.prepare(`
       SELECT 
@@ -284,6 +361,69 @@ exports.addComment = async (req, res) => {
       JOIN users u ON c.user_id = u.id 
       WHERE c.id = ?
     `).get(result.lastInsertRowid);
+
+    // Get commenter info
+    const commenterStmt = db.prepare('SELECT username FROM users WHERE id = ?');
+    const commenter = commenterStmt.get(userId);
+
+    // Notify post author (if not commenting on own post)
+    if (post.user_id !== userId) {
+      const notifId = notificationsController.createNotification(
+        post.user_id,
+        'COMMENT_REPLY',
+        'New Comment',
+        `${commenter?.username || 'Someone'} commented on your post`,
+        `/posts/${id}`,
+        userId,
+        result.lastInsertRowid
+      );
+
+      // Send real-time notification
+      if (ioInstance && notifId) {
+        ioInstance.to(`user-${post.user_id}`).emit('new_notification', {
+          id: notifId,
+          type: 'COMMENT_REPLY',
+          title: 'New Comment',
+          message: `${commenter?.username || 'Someone'} commented on your post`,
+          link: `/posts/${id}`,
+          related_username: commenter?.username,
+          created_at: new Date().toISOString()
+        });
+      }
+    }
+
+    // Also notify other commenters (excluding current user and post author)
+    const otherCommentersStmt = db.prepare(`
+      SELECT DISTINCT user_id 
+      FROM post_comments 
+      WHERE post_id = ? AND user_id != ? AND user_id != ?
+    `);
+    const otherCommenters = otherCommentersStmt.all(id, userId, post.user_id);
+
+    otherCommenters.forEach(commenter => {
+      const notifId = notificationsController.createNotification(
+        commenter.user_id,
+        'COMMENT_REPLY',
+        'New Reply',
+        `${commenter?.username || 'Someone'} also commented on a post you commented on`,
+        `/posts/${id}`,
+        userId,
+        result.lastInsertRowid
+      );
+
+      // Send real-time notification
+      if (ioInstance && notifId) {
+        ioInstance.to(`user-${commenter.user_id}`).emit('new_notification', {
+          id: notifId,
+          type: 'COMMENT_REPLY',
+          title: 'New Reply',
+          message: `${commenter?.username || 'Someone'} also commented on a post you commented on`,
+          link: `/posts/${id}`,
+          related_username: commenter?.username,
+          created_at: new Date().toISOString()
+        });
+      }
+    });
 
     res.status(201).json(comment);
   } catch (err) {
@@ -308,11 +448,77 @@ exports.deleteComment = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    // Get post author to remove points
+    const post = db.prepare('SELECT user_id FROM posts WHERE id = ?').get(comment.post_id);
+    
     db.prepare('DELETE FROM post_comments WHERE id = ?').run(commentId);
+
+    // Remove 2 points from post author (if comment was not on own post)
+    if (post && post.user_id !== userId) {
+      db.prepare('UPDATE users SET points = GREATEST(points - 2, 0) WHERE id = ?').run(post.user_id);
+    }
 
     res.json({ message: 'Comment deleted' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'DB error' });
+  }
+};
+
+// RECALCULATE ALL POINTS
+// This function recalculates points for all users based on existing likes and comments
+exports.recalculateAllPoints = async (req, res) => {
+  try {
+    // Reset all points to 0
+    db.prepare('UPDATE users SET points = 0').run();
+
+    // Calculate points from likes
+    // +5 points for each like received (excluding self-likes)
+    const likesData = db.prepare(`
+      SELECT p.user_id, COUNT(*) as like_count
+      FROM post_likes pl
+      JOIN posts p ON pl.post_id = p.id
+      WHERE pl.user_id != p.user_id
+      GROUP BY p.user_id
+    `).all();
+
+    likesData.forEach(({ user_id, like_count }) => {
+      const points = like_count * 1;
+      db.prepare('UPDATE users SET points = points + ? WHERE id = ?').run(points, user_id);
+    });
+
+    // Calculate points from comments
+    // +10 points for each comment received (excluding self-comments)
+    const commentsData = db.prepare(`
+      SELECT p.user_id, COUNT(*) as comment_count
+      FROM post_comments pc
+      JOIN posts p ON pc.post_id = p.id
+      WHERE pc.user_id != p.user_id
+      GROUP BY p.user_id
+    `).all();
+
+    commentsData.forEach(({ user_id, comment_count }) => {
+      const points = comment_count * 2;
+      db.prepare('UPDATE users SET points = points + ? WHERE id = ?').run(points, user_id);
+    });
+
+    // Get summary statistics
+    const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
+    const usersWithPoints = db.prepare('SELECT COUNT(*) as count FROM users WHERE points > 0').get().count;
+    const totalPoints = db.prepare('SELECT SUM(points) as total FROM users').get().total || 0;
+    const topUser = db.prepare('SELECT username, points FROM users ORDER BY points DESC LIMIT 1').get();
+
+    res.json({ 
+      message: 'Points recalculated successfully',
+      statistics: {
+        total_users: totalUsers,
+        users_with_points: usersWithPoints,
+        total_points_distributed: totalPoints,
+        top_user: topUser
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'DB error during recalculation' });
   }
 };

@@ -149,6 +149,21 @@ CREATE TABLE IF NOT EXISTS post_comments (
   FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('TASK_NEW','TASK_UPDATE','TASK_DEADLINE','MENTION','ROOM_INVITE','COMMENT_REPLY','FRIEND_REQUEST','FRIEND_ACCEPT','POST_LIKE')),
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  link TEXT,
+  read INTEGER DEFAULT 0,
+  related_user_id INTEGER,
+  related_id INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (related_user_id) REFERENCES users(id) ON DELETE SET NULL
+);
 `);
 
 // Migration: Add last_seen column if it doesn't exist
@@ -240,6 +255,230 @@ try {
   // Column already exists
 }
 
+// Migration: Update notifications table to support POST_LIKE type
+try {
+  const tableInfo = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='notifications'").get();
+  
+  if (tableInfo && !tableInfo.sql.includes('POST_LIKE')) {
+    console.log('Migrating notifications table to add POST_LIKE type...');
+    
+    // Create backup
+    db.prepare('CREATE TABLE notifications_backup AS SELECT * FROM notifications').run();
+    
+    // Drop old table
+    db.prepare('DROP TABLE notifications').run();
+    
+    // Recreate with new constraint
+    db.prepare(`CREATE TABLE notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      type TEXT NOT NULL CHECK (type IN ('TASK_NEW','TASK_UPDATE','TASK_DEADLINE','MENTION','ROOM_INVITE','COMMENT_REPLY','FRIEND_REQUEST','FRIEND_ACCEPT','POST_LIKE')),
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      link TEXT,
+      read INTEGER DEFAULT 0,
+      related_user_id INTEGER,
+      related_id INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (related_user_id) REFERENCES users(id) ON DELETE SET NULL
+    )`).run();
+    
+    // Restore data
+    db.prepare('INSERT INTO notifications SELECT * FROM notifications_backup').run();
+    
+    // Drop backup
+    db.prepare('DROP TABLE notifications_backup').run();
+    
+    console.log('Notifications table migration completed successfully!');
+  }
+} catch (error) {
+  console.error('Error migrating notifications table:', error.message);
+  try {
+    const backupExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='notifications_backup'").get();
+    if (backupExists) {
+      db.prepare('DROP TABLE IF EXISTS notifications').run();
+      db.prepare('ALTER TABLE notifications_backup RENAME TO notifications').run();
+      console.log('Restored notifications from backup');
+    }
+  } catch (restoreError) {
+    console.error('Error restoring backup:', restoreError.message);
+  }
+}
+
+// Migration: Add role to room_members table
+try {
+  db.prepare('ALTER TABLE room_members ADD COLUMN role TEXT DEFAULT "member" CHECK (role IN ("admin","moderator","member"))').run();
+  console.log('Added role column to room_members');
+} catch (error) {
+  // Column already exists
+}
+
+// Migration: Add extended fields to rooms table
+try {
+  db.prepare('ALTER TABLE rooms ADD COLUMN description TEXT').run();
+} catch (error) {
+  // Column already exists
+}
+
+try {
+  db.prepare('ALTER TABLE rooms ADD COLUMN rules TEXT').run();
+} catch (error) {
+  // Column already exists
+}
+
+try {
+  db.prepare('ALTER TABLE rooms ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP').run();
+} catch (error) {
+  // Column already exists
+}
+
+// Update existing room creators to have admin role
+try {
+  db.prepare(`
+    UPDATE room_members 
+    SET role = 'admin' 
+    WHERE user_id IN (
+      SELECT created_by FROM rooms WHERE rooms.id = room_members.room_id
+    )
+  `).run();
+  console.log('Updated room creators to admin role');
+} catch (error) {
+  console.error('Error updating admin roles:', error.message);
+}
+
+// Migration: Add profile enhancements to users table
+try {
+  db.prepare('ALTER TABLE users ADD COLUMN bio TEXT').run();
+} catch (error) {
+  // Column already exists
+}
+
+try {
+  db.prepare('ALTER TABLE users ADD COLUMN location TEXT').run();
+} catch (error) {
+  // Column already exists
+}
+
+try {
+  db.prepare('ALTER TABLE users ADD COLUMN website TEXT').run();
+} catch (error) {
+  // Column already exists
+}
+
+try {
+  db.prepare('ALTER TABLE users ADD COLUMN github_url TEXT').run();
+} catch (error) {
+  // Column already exists
+}
+
+try {
+  db.prepare('ALTER TABLE users ADD COLUMN linkedin_url TEXT').run();
+} catch (error) {
+  // Column already exists
+}
+
+try {
+  db.prepare('ALTER TABLE users ADD COLUMN twitter_url TEXT').run();
+} catch (error) {
+  // Column already exists
+}
+
+try {
+  db.prepare('ALTER TABLE users ADD COLUMN is_profile_public INTEGER DEFAULT 1').run();
+} catch (error) {
+  // Column already exists
+}
+
+// Create projects table
+db.exec(`
+CREATE TABLE IF NOT EXISTS projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  url TEXT,
+  image_url TEXT,
+  technologies TEXT,
+  start_date TEXT,
+  end_date TEXT,
+  is_current INTEGER DEFAULT 0,
+  display_order INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+`);
+
+// Create achievements/badges table
+db.exec(`
+CREATE TABLE IF NOT EXISTS achievements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  icon TEXT,
+  category TEXT,
+  points INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+`);
+
+// Create user_achievements table
+db.exec(`
+CREATE TABLE IF NOT EXISTS user_achievements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  achievement_id INTEGER NOT NULL,
+  earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE,
+  UNIQUE(user_id, achievement_id)
+);
+`);
+
+// Create activity feed table
+db.exec(`
+CREATE TABLE IF NOT EXISTS activities (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  activity_type TEXT NOT NULL,
+  activity_data TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+`);
+
+// Add points column to users table
+try {
+  db.prepare('ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0').run();
+  console.log('Points column added to users table');
+} catch (error) {
+  if (!error.message.includes('duplicate column')) {
+    console.error('Error adding points column:', error.message);
+  }
+}
+
+// Insert default achievements
+const defaultAchievements = [
+  { name: 'First Post', description: 'Created your first post', icon: '📝', category: 'posts', points: 10 },
+  { name: 'Team Player', description: 'Joined your first room', icon: '🤝', category: 'rooms', points: 10 },
+  { name: 'Task Master', description: 'Completed 10 tasks', icon: '✅', category: 'tasks', points: 50 },
+  { name: 'Social Butterfly', description: 'Made 5 friends', icon: '🦋', category: 'social', points: 25 },
+  { name: 'Early Bird', description: 'Member for 30 days', icon: '🌅', category: 'tenure', points: 30 },
+  { name: 'Collaborator', description: 'Contributed to 5 different rooms', icon: '🔧', category: 'collaboration', points: 40 },
+  { name: 'Helpful', description: 'Received 10 likes on comments', icon: '❤️', category: 'engagement', points: 20 },
+  { name: 'Popular', description: 'Got 100 profile views', icon: '⭐', category: 'visibility', points: 50 }
+];
+
+try {
+  const insertAchievement = db.prepare('INSERT OR IGNORE INTO achievements (name, description, icon, category, points) VALUES (?, ?, ?, ?, ?)');
+  for (const achievement of defaultAchievements) {
+    insertAchievement.run(achievement.name, achievement.description, achievement.icon, achievement.category, achievement.points);
+  }
+  console.log('Default achievements inserted');
+} catch (error) {
+  console.error('Error inserting achievements:', error.message);
+}
+
 const authRoutes = require('./routes/auth_routes');
 const postsRoutes = require('./routes/posts_routes');
 const roomsRoutes = require('./routes/rooms_routes');
@@ -251,9 +490,19 @@ const friendsRoutes = require('./routes/friends_routes');
 const directMessagesRoutes = require('./routes/direct_messages_routes');
 const profileRoutes = require('./routes/profile_routes');
 const chatbotRoutes = require('./routes/chatbot_routes');
+const notificationsRoutes = require('./routes/notifications_routes');
 
 const app = express();
-app.use(cors());
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.CORS_ORIGINS?.split(',') || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+}));
+
 app.use(express.json({ limit: '50mb' }));
 
 // Ensure uploads directory exists
@@ -269,9 +518,21 @@ if (!fs.existsSync(roomFilesDir)) {
 }
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', cors(), express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, filePath) => {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+}));
 
-app.use('/api/auth', authRoutes);
+// Import rate limiters
+const { apiLimiter, authLimiter, createLimiter, messageLimiter } = require('./middleware/rateLimiter');
+
+// Apply global API rate limiter
+app.use('/api/', apiLimiter);
+
+// Apply specific rate limiters to routes
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/rooms', roomsRoutes);
 app.use('/api/messages', messagesRoutes);
@@ -282,6 +543,7 @@ app.use('/api/friends', friendsRoutes);
 app.use('/api/direct-messages', directMessagesRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 app.get('/', (req, res) => res.send('Hello from backend!'));
 
@@ -295,9 +557,17 @@ app.get('/test-db', (req, res) => {
   }
 });
 
+// 404 handler
+const { notFound, errorHandler } = require('./middleware/errorHandler');
+app.use(notFound);
+
+// Global error handler (must be last)
+app.use(errorHandler);
+
 const server = http.createServer(app);
 const io = initializeSocket(server);
 
-server.listen(5000, () =>
-  console.log('Backend running on http://localhost:5000')
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () =>
+  console.log(`Backend running on http://localhost:${PORT}`)
 );

@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { getIO, getOnlineUsers } = require('../socket');
+const notificationsController = require('./notifications');
 
 // Send friend request
 exports.sendFriendRequest = (req, res) => {
@@ -41,18 +42,34 @@ exports.sendFriendRequest = (req, res) => {
     const stmt = db.prepare('INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)');
     const result = stmt.run(userId, friendId, 'PENDING');
 
+    // Get sender info for notification
+    const sender = db.prepare('SELECT username FROM users WHERE id = ?').get(userId);
+
+    // Create notification in database
+    const notifId = notificationsController.createNotification(
+      friendId,
+      'FRIEND_REQUEST',
+      'Friend Request',
+      `${sender?.username || 'Someone'} sent you a friend request`,
+      '/friends',
+      userId,
+      result.lastInsertRowid
+    );
+
     // Notify recipient via socket if online
     try {
       const io = getIO();
-      const onlineUsers = getOnlineUsers();
-      const recipientSocketId = onlineUsers.get(friendId);
       
-      if (recipientSocketId) {
-        const sender = db.prepare('SELECT username FROM users WHERE id = ?').get(userId);
-        io.to(recipientSocketId).emit('friend_request_received', {
-          userId: userId,
-          username: sender?.username,
-          requestId: result.lastInsertRowid
+      // Emit new notification event
+      if (notifId) {
+        io.to(`user-${friendId}`).emit('new_notification', {
+          id: notifId,
+          type: 'FRIEND_REQUEST',
+          title: 'Friend Request',
+          message: `${sender?.username || 'Someone'} sent you a friend request`,
+          link: '/friends',
+          related_username: sender?.username,
+          created_at: new Date().toISOString()
         });
       }
     } catch (err) {
@@ -86,17 +103,34 @@ exports.acceptFriendRequest = (req, res) => {
     // Update status to ACCEPTED
     db.prepare('UPDATE friends SET status = ? WHERE id = ?').run('ACCEPTED', requestId);
 
+    // Get accepter info for notification
+    const accepter = db.prepare('SELECT username FROM users WHERE id = ?').get(userId);
+
+    // Create notification in database for the original sender
+    const notifId = notificationsController.createNotification(
+      request.user_id,
+      'FRIEND_ACCEPT',
+      'Friend Request Accepted',
+      `${accepter?.username || 'Someone'} accepted your friend request`,
+      '/friends',
+      userId,
+      requestId
+    );
+
     // Notify sender via socket if online
     try {
       const io = getIO();
-      const onlineUsers = getOnlineUsers();
-      const senderSocketId = onlineUsers.get(request.user_id);
       
-      if (senderSocketId) {
-        const accepter = db.prepare('SELECT username FROM users WHERE id = ?').get(userId);
-        io.to(senderSocketId).emit('friend_request_accepted', {
-          userId: userId,
-          username: accepter?.username
+      // Emit new notification event
+      if (notifId) {
+        io.to(`user-${request.user_id}`).emit('new_notification', {
+          id: notifId,
+          type: 'FRIEND_ACCEPT',
+          title: 'Friend Request Accepted',
+          message: `${accepter?.username || 'Someone'} accepted your friend request`,
+          link: '/friends',
+          related_username: accepter?.username,
+          created_at: new Date().toISOString()
         });
       }
     } catch (err) {

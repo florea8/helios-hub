@@ -1,0 +1,133 @@
+/* PostCard Component - Clase din Home.css */
+
+.post-item {
+  background: rgba(244, 243, 236, 0.02);
+  border: 1px solid rgba(244, 243, 236, 0.08);
+  border-radius: 12px;
+  padding: 1.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fade-in-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.post-item:hover {
+  border-color: rgba(100, 108, 255, 0.2);
+  background: rgba(244, 243, 236, 0.04);
+  transform: translateY(-4px);
+}
+
+.post-top {
+  margin-bottom: 1.25rem;
+}
+
+.post-author-info {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.author-pic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.author-pic img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.author-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.author-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.author-name:hover {
+  color: var(--accent-color);
+}
+
+.post-time {
+  font-size: 0.875rem;
+  color: rgba(244, 243, 236, 0.5);
+}
+
+.post-heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.875rem;
+  line-height: 1.4;
+}
+
+.post-excerpt {
+  color: rgba(244, 243, 236, 0.7);
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-image-container {
+  margin: 1rem 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(100, 108, 255, 0.2);
+  background: rgba(var(--bg-primary-rgb), 0.5);
+}
+
+.post-image {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+.post-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(244, 243, 236, 0.08);
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: rgba(244, 243, 236, 0.5);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  padding: 0.5rem 0.875rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.action-button:hover {
+  background: rgba(244, 243, 236, 0.05);
+  color: var(--accent-color);
+}

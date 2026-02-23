@@ -125,7 +125,13 @@ export default function Register() {
       navigate('/login');
     } catch (err) {
       console.error('Register failed:', err.response?.data || err.message);
-      alert('Register failed: ' + (err.response?.data?.message || 'Unknown error'));
+      if (err.response?.data?.details) {
+        console.error('Validation errors:', err.response.data.details);
+        const errorMessages = err.response.data.details.map(d => d.message || d).join('\n');
+        alert('Validation errors:\n' + errorMessages);
+      } else {
+        alert('Register failed: ' + (err.response?.data?.message || 'Unknown error'));
+      }
     }
   };
 

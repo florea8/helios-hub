@@ -14,9 +14,9 @@ const NotificationToast = () => {
           onClick={() => removeNotification(notif.id)}
         >
           <div className="notification-icon">
-            {notif.type === 'message' && '💬'}
-            {notif.type === 'friend_request' && '👥'}
-            {notif.type === 'friend_accepted' && '✅'}
+            {notif.type === 'message' && 'MSG'}
+            {notif.type === 'friend_request' && 'REQ'}
+            {notif.type === 'friend_accepted' && 'OK'}
           </div>
           <div className="notification-content">
             <div className="notification-title">{notif.title}</div>
@@ -29,7 +29,7 @@ const NotificationToast = () => {
               removeNotification(notif.id);
             }}
           >
-            ✕
+            &times;
           </button>
         </div>
       ))}

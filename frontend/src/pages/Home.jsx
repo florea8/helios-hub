@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 import '../styles/Home.css';
 
 const Home = () => {
   const [scrollY, setScrollY] = useState(0);
+  const [loading, setLoading] = useState(true);
   const { user, logout } = useAuth();
   const { getTotalUnreadMessages, pendingFriendRequests } = useNotifications();
 
@@ -14,6 +16,62 @@ const Home = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    // Simulate initial loading
+    const timer = setTimeout(() => setLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="home-container">
+        <div className="atmosphere-bg">
+          <div className="gradient-mesh"></div>
+          <div className="grid-pattern"></div>
+        </div>
+        <header className="main-header">
+          <div className="header-inner">
+            <Link to="/" className="brand-logo">
+              <svg className="logo-icon" viewBox="0 0 40 40" fill="none">
+                <path d="M20 5L25 15H15L20 5Z" fill="url(#logo-grad)"/>
+                <path d="M20 35L15 25H25L20 35Z" fill="url(#logo-grad)"/>
+                <circle cx="20" cy="20" r="3" fill="url(#logo-grad)"/>
+                <defs>
+                  <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#646cff"/>
+                    <stop offset="100%" stopColor="#41d1ff"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span className="brand-name">Helios</span>
+            </Link>
+          </div>
+        </header>
+        <div style={{ padding: '150px 20px', maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ marginBottom: '50px', textAlign: 'center' }}>
+            <div style={{ 
+              width: '200px', 
+              height: '60px', 
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%)',
+              borderRadius: '8px',
+              margin: '0 auto 30px',
+              animation: 'skeleton-loading 1.5s infinite'
+            }}></div>
+            <div style={{ 
+              width: '400px', 
+              height: '30px', 
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%)',
+              borderRadius: '8px',
+              margin: '0 auto',
+              animation: 'skeleton-loading 1.5s infinite'
+            }}></div>
+          </div>
+          <LoadingSkeleton type="card" count={3} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="home-container">
@@ -44,7 +102,6 @@ const Home = () => {
             {user ? (
               <>
                 <Link to="/dashboard" className="nav-item">Dashboard</Link>
-                <Link to="/posts" className="nav-item">Posts</Link>
                 <Link to="/rooms" className="nav-item">Rooms</Link>
                 <Link to="/friends" className="nav-item nav-item-with-badge">
                   Friends
@@ -73,32 +130,32 @@ const Home = () => {
         <div className="hero-grid">
           <div className="hero-text">
             <div className="hero-badge">
-              <span className="badge-pulse"></span>
-              <span>The Build Tool for Collaboration</span>
+              <span className="badge-dot"></span>
+              <span>The Future of Team Collaboration</span>
             </div>
             
             <h1 className="hero-headline">
-              Welcome to
-              <span className="headline-gradient"> Helios</span>
+              Build, Connect, and
+              <span className="headline-gradient"> Collaborate Seamlessly</span>
             </h1>
             
             <p className="hero-description">
-              Your collaborative workspace for sharing ideas, connecting with friends, 
-              and building amazing projects together. Experience real-time collaboration 
-              like never before.
+              Helios is the all-in-one collaboration platform that brings your team together. 
+              From real-time messaging and AI assistance to task management and team spaces—
+              everything you need to work better, faster.
             </p>
 
             <div className="hero-actions">
               {!user ? (
                 <>
                   <Link to="/register" className="btn-primary">
-                    <span>Get Started</span>
+                    <span>Get Started Free</span>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="2"/>
                     </svg>
                   </Link>
                   <Link to="/login" className="btn-secondary">
-                    <span>View Demo</span>
+                    <span>Sign In</span>
                   </Link>
                 </>
               ) : (
@@ -111,102 +168,36 @@ const Home = () => {
               )}
             </div>
 
-            <div className="code-snippet">
-              <div className="snippet-header">
-                <span className="dot"></span>
-                <span className="dot"></span>
-                <span className="dot"></span>
+            <div className="hero-features-list">
+              <div className="feature-pill">
+                Real-time Messaging
               </div>
-              <code className="snippet-body">
-                <span className="prompt">$</span>
-                <span className="command"> npm create helios@latest</span>
-              </code>
+              <div className="feature-pill">
+                AI-Powered Assistant
+              </div>
+              <div className="feature-pill">
+                Task Management
+              </div>
+              <div className="feature-pill">
+                Team Spaces
+              </div>
             </div>
           </div>
 
           <div className="hero-visuals">
             <div className="visual-card card-animate-1">
-              <div className="card-top">
-                <div className="hero-icon-wrapper">
-                  <svg className="hero-svg" viewBox="0 0 24 24" fill="none">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" 
-                          stroke="url(#hero-grad1)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <defs>
-                      <linearGradient id="hero-grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#646cff"/>
-                        <stop offset="100%" stopColor="#41d1ff"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                <h3>Instant Start</h3>
-              </div>
-              <p>Lightning-fast collaboration with on-demand file serving</p>
-              <div className="card-content">
-                <div className="terminal-mock">
-                  <div className="terminal-row">
-                    <span className="time-stamp">10:24:35</span>
-                    <span className="terminal-text">Server ready in 127ms</span>
-                  </div>
-                  <div className="terminal-row">
-                    <span className="time-stamp">10:24:35</span>
-                    <span className="success-text">✓ Connected</span>
-                  </div>
-                </div>
-              </div>
+              <h3>Real-Time Messaging</h3>
+              <p>Instant communication with your team through direct messages and group chats</p>
             </div>
 
             <div className="visual-card card-animate-2">
-              <div className="card-top">
-                <div className="hero-icon-wrapper">
-                  <svg className="hero-svg" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" 
-                          stroke="url(#hero-grad2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" 
-                          stroke="url(#hero-grad2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <defs>
-                      <linearGradient id="hero-grad2" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#646cff"/>
-                        <stop offset="100%" stopColor="#41d1ff"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                <h3>Secure</h3>
-              </div>
-              <p>End-to-end encrypted communication</p>
-              <div className="card-content">
-                <div className="encryption-viz">
-                  <div className="lock-icon"></div>
-                  <div className="wave-rings"></div>
-                </div>
-              </div>
+              <h3>Smart Task Management</h3>
+              <p>Organize projects, set deadlines, and track progress effortlessly</p>
             </div>
 
             <div className="visual-card card-animate-3">
-              <div className="card-top">
-                <div className="hero-icon-wrapper">
-                  <svg className="hero-svg" viewBox="0 0 24 24" fill="none">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" 
-                             stroke="url(#hero-grad3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <defs>
-                      <linearGradient id="hero-grad3" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#646cff"/>
-                        <stop offset="100%" stopColor="#41d1ff"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-                <h3>Modern</h3>
-              </div>
-              <p>Built with cutting-edge technology</p>
-              <div className="card-content">
-                <div className="tech-badges">
-                  <span className="tech-tag">React</span>
-                  <span className="tech-tag">Vite</span>
-                  <span className="tech-tag">Node.js</span>
-                </div>
-              </div>
+              <h3>AI Assistant</h3>
+              <p>Get instant help and intelligent suggestions powered by advanced AI</p>
             </div>
           </div>
         </div>
@@ -215,107 +206,85 @@ const Home = () => {
       {/* Stats Bar - Full Width */}
       <section className="stats-bar">
         <div className="stat-box">
-          <div className="stat-number">10K+</div>
+          <div className="stat-number">5K+</div>
           <div className="stat-label">Active Users</div>
         </div>
         <div className="stat-divider"></div>
         <div className="stat-box">
-          <div className="stat-number">50K+</div>
-          <div className="stat-label">Projects Created</div>
+          <div className="stat-number">100K+</div>
+          <div className="stat-label">Messages Sent</div>
         </div>
         <div className="stat-divider"></div>
         <div className="stat-box">
-          <div className="stat-number">99.9%</div>
-          <div className="stat-label">Uptime</div>
+          <div className="stat-number">2K+</div>
+          <div className="stat-label">Team Rooms</div>
         </div>
         <div className="stat-divider"></div>
         <div className="stat-box">
-          <div className="stat-number">150+</div>
-          <div className="stat-label">Countries</div>
+          <div className="stat-number">10K+</div>
+          <div className="stat-label">Tasks Completed</div>
         </div>
       </section>
 
       {/* Trusted By Section - Full Width */}
       <section className="trusted-section">
-        <p className="trusted-title">Trusted by teams worldwide</p>
+        <p className="trusted-title">Trusted by collaboration teams worldwide</p>
         <div className="trusted-grid">
-          <div className="company-logo">OpenAI</div>
-          <div className="company-logo">Shopify</div>
-          <div className="company-logo">Stripe</div>
-          <div className="company-logo">Linear</div>
-          <div className="company-logo">ClickUp</div>
-          <div className="company-logo">Vercel</div>
+          <div className="company-logo">Teams</div>
+          <div className="company-logo">Startups</div>
+          <div className="company-logo">Freelancers</div>
+          <div className="company-logo">Agencies</div>
+          <div className="company-logo">Remote Workers</div>
+          <div className="company-logo">Educators</div>
         </div>
       </section>
 
       {/* Features Showcase - Full Width */}
       <section className="features-showcase">
         <div className="section-intro">
-          <h2 className="section-heading">Redefining collaboration</h2>
+          <h2 className="section-heading">Everything you need in one platform</h2>
           <p className="section-subheading">
-            Helios makes teamwork enjoyable again with powerful features designed for modern teams
+            Streamline your workflow with powerful features designed for modern teams
           </p>
         </div>
 
         <div className="showcase-grid">
           <div className="showcase-card">
-            <div className="showcase-visual">
-              <div className="code-preview">
-                <div className="code-row">
-                  <span className="code-comment">// Real-time updates</span>
-                </div>
-                <div className="code-row">
-                  <span className="code-keyword">const</span>
-                  <span> collaboration = </span>
-                  <span className="code-string">'instant'</span>
-                </div>
-                <div className="code-row">
-                  <span className="code-keyword">const</span>
-                  <span> speed = </span>
-                  <span className="code-string">'blazing'</span>
-                </div>
-              </div>
-            </div>
-            <h3 className="showcase-title">Lightning Fast HMR</h3>
-            <p className="showcase-text">Instantly reflect changes as you collaborate, no matter how big your team is.</p>
+            <h3 className="showcase-title">Team Spaces</h3>
+            <p className="showcase-text">Create dedicated workspaces for your projects with file sharing, chat, and collaboration tools.</p>
           </div>
 
           <div className="showcase-card">
-            <div className="showcase-visual">
-              <div className="feature-tags-grid">
-                <div className="feature-badge">TypeScript</div>
-                <div className="feature-badge">JSX</div>
-                <div className="feature-badge">Markdown</div>
-                <div className="feature-badge">CSS</div>
-                <div className="feature-badge">Workers</div>
-                <div className="feature-badge">WASM</div>
-              </div>
-            </div>
-            <h3 className="showcase-title">Rich Features</h3>
-            <p className="showcase-text">TypeScript, JSX, CSS, Workers, and more - just a plugin away.</p>
+            <h3 className="showcase-title">Smart Organization</h3>
+            <p className="showcase-text">Tag, categorize, and organize content effortlessly with intelligent recommendations.</p>
           </div>
 
           <div className="showcase-card">
-            <div className="showcase-visual">
-              <div className="build-visual">
-                <div className="progress-track">
-                  <div className="progress-fill"></div>
-                </div>
-                <div className="build-info">
-                  <span>✓ Optimized</span>
-                  <span>327ms</span>
-                </div>
-              </div>
-            </div>
-            <h3 className="showcase-title">Optimized Build</h3>
-            <p className="showcase-text">Advanced optimization and fine-grained control for production.</p>
+            <h3 className="showcase-title">Social Collaboration</h3>
+            <p className="showcase-text">Share updates, provide feedback, and build meaningful connections with your network.</p>
+          </div>
+
+          <div className="showcase-card">
+            <h3 className="showcase-title">Real-Time Updates</h3>
+            <p className="showcase-text">Stay in sync with live notifications, instant messaging, and presence indicators.</p>
+          </div>
+
+          <div className="showcase-card">
+            <h3 className="showcase-title">Lightning Fast</h3>
+            <p className="showcase-text">Optimized performance ensures smooth collaboration without lag or delays.</p>
+          </div>
+
+          <div className="showcase-card">
+            <h3 className="showcase-title">Enterprise Security</h3>
+            <p className="showcase-text">Bank-level encryption, authentication, and access controls to protect your data.</p>
           </div>
         </div>
       </section>
 
-            {/* Community Section - Code Terminal Style with Live Activity */}
-          <section className="community-section-v3">
-          <div className="community-terminal-layout">
+      {/* Community Section - Live Terminal */}
+      <section className="community-section-v3">
+        <div className="community-grid-v3">
+          <div className="community-terminal-side">
             <div className="terminal-window">
               <div className="terminal-header">
                 <div className="terminal-dots">
@@ -323,89 +292,80 @@ const Home = () => {
                   <span className="dot yellow"></span>
                   <span className="dot green"></span>
                 </div>
-                <div className="terminal-title">community@helios:~$</div>
+                <span className="terminal-title">helios_dashboard.js</span>
               </div>
               <div className="terminal-body">
                 <div className="terminal-line">
                   <span className="prompt">$</span>
-                  <span className="command">helios stats --global</span>
+                  <span className="command">helios status --live</span>
                 </div>
                 <div className="terminal-output">
                   <div className="stat-line">
-                    <span className="stat-label">→ Active Developers:</span>
-                    <span className="stat-value animate-count">20,847</span>
-                    <span className="stat-trend">↑ 12%</span>
+                    <span className="stat-label">→ Active Users:</span>
+                    <span className="stat-value animate-count">5,284</span>
+                    <span className="stat-badge">Online</span>
                   </div>
                   <div className="stat-line">
-                    <span className="stat-label">→ Code Generated:</span>
-                    <span className="stat-value animate-count">5.2M</span>
-                    <span className="stat-trend">↑ 340%</span>
+                    <span className="stat-label">→ Active Rooms:</span>
+                    <span className="stat-value">432</span>
+                    <span className="stat-badge">Live</span>
                   </div>
                   <div className="stat-line">
-                    <span className="stat-label">→ Countries:</span>
-                    <span className="stat-value">127</span>
-                    <span className="stat-badge">🌍</span>
-                  </div>
-                  <div className="stat-line">
-                    <span className="stat-label">→ Projects Deployed:</span>
-                    <span className="stat-value animate-count">8,451</span>
-                    <span className="stat-trend">↑ 89%</span>
+                    <span className="stat-label">→ Tasks Completed:</span>
+                    <span className="stat-value animate-count">2,891</span>
+                    <span className="stat-trend">↑ 67%</span>
                   </div>
                 </div>
                 <div className="terminal-line blink-cursor">
                   <span className="prompt">$</span>
-                  <span className="command">join_community()</span>
+                  <span className="command">join_helios()</span>
                   <span className="cursor">_</span>
                 </div>
               </div>
             </div>
-
-            <div className="community-content-side">
-              <div className="pulse-badge">
-                <div className="pulse-dot"></div>
-                <span>Live Community</span>
-              </div>
-              <h2 className="community-title-v3">
-                Join the Revolution in
-                <span className="gradient-text"> Real-Time</span>
-              </h2>
-              <p className="community-description-v3">
-                Watch developers around the world build, ship, and collaborate in real-time. 
-                Our community grows every second with passionate creators pushing boundaries.
-              </p>
-
-              <div className="live-activity-feed">
-                <div className="activity-item fade-in-1">
-                  <div className="activity-dot"></div>
-                  <span className="activity-user">Sarah M.</span>
-                  <span className="activity-action">deployed a new app</span>
-                  <span className="activity-time">2s ago</span>
-                </div>
-                <div className="activity-item fade-in-2">
-                  <div className="activity-dot"></div>
-                  <span className="activity-user">James K.</span>
-                  <span className="activity-action">joined the platform</span>
-                  <span className="activity-time">5s ago</span>
-                </div>
-                <div className="activity-item fade-in-3">
-                  <div className="activity-dot"></div>
-                  <span className="activity-user">Maria C.</span>
-                  <span className="activity-action">shared a project</span>
-                  <span className="activity-time">8s ago</span>
-                </div>
-              </div>
-
-              <Link to={user ? "/dashboard" : "/register"} className="btn-terminal">
-                <span>$ join_now --get-started</span>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-              </Link>
-            </div>
           </div>
-        </section>
-      
-      {/* Integration Section - Workflow Code Animation */}
+
+          <div className="community-content-side">
+            <div className="pulse-badge">
+              <div className="pulse-dot"></div>
+              <span>Live Activity</span>
+            </div>
+            <h2 className="community-title-v3">
+              Join Thousands of
+              <span className="gradient-text"> Collaborators</span>
+            </h2>
+            <p className="community-description-v3">
+              Watch teams collaborate in real-time. Our community grows every day with 
+              professionals, students, and teams who choose Helios for seamless communication 
+              and project management.
+            </p>
+
+            <div className="live-activity-feed">
+              <div className="activity-item fade-in-1">
+                <span className="activity-user">Alex T.</span>
+                <span className="activity-action">created a new room</span>
+                <span className="activity-time">2s ago</span>
+              </div>
+              <div className="activity-item fade-in-2">
+                <span className="activity-user">Emma K.</span>
+                <span className="activity-action">completed a task</span>
+                <span className="activity-time">5s ago</span>
+              </div>
+              <div className="activity-item fade-in-3">
+                <span className="activity-user">Chris M.</span>
+                <span className="activity-action">shared a post</span>
+                <span className="activity-time">8s ago</span>
+              </div>
+            </div>
+
+            <Link to={user ? "/dashboard" : "/register"} className="btn-terminal">
+              <span>Start Collaborating Now</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Workflow Section */}
       <section className="integration-section-v3">
           <div className="workflow-header">
             <h2 className="workflow-title">
@@ -426,8 +386,7 @@ const Home = () => {
                   <div className="code-header">
                     <span className="code-lang">prompt</span>
                   </div>
-                  <pre className="code-content">
-{`"Build a real-time chat
+                  <pre className="code-content">{`"Build a real-time chat
 with user presence and
 typing indicators"`}</pre>
                 </div>
@@ -459,8 +418,7 @@ typing indicators"`}</pre>
                       <div className="gen-dot"></div>
                     </div>
                   </div>
-                  <pre className="code-content">
-{`const ChatRoom = () => {
+                  <pre className="code-content">{`const ChatRoom = () => {
   const [users, setUsers] =
     useState<User[]>([]);
   // AI generating...`}</pre>
@@ -489,8 +447,7 @@ typing indicators"`}</pre>
                     <span className="code-lang">Review</span>
                     <span className="code-status success">✓ Tests Passing</span>
                   </div>
-                  <pre className="code-content">
-{`✓ TypeScript types
+                  <pre className="code-content">{`✓ TypeScript types
 ✓ Error handling
 ✓ Performance optimized`}</pre>
                 </div>
@@ -518,8 +475,7 @@ typing indicators"`}</pre>
                     <span className="code-lang">Production</span>
                     <span className="code-status deploying">🚀 Live</span>
                   </div>
-                  <pre className="code-content">
-{`✓ Build successful
+                  <pre className="code-content">{`✓ Build successful
 ✓ Deployed to edge
 → chat.helios.dev`}</pre>
                 </div>
@@ -541,124 +497,92 @@ typing indicators"`}</pre>
               <div className="tool-badge">GitHub Copilot</div>
             </div>
           </div>
-        </section>
+      </section>
 
-      {/* Testimonials Section - Interactive Card Stack */}
+      {/* Testimonials Section */}
       <section className="testimonials-section-v3">
-          <div className="testimonials-container">
-            <div className="testimonials-left-panel">
-              <div className="rating-display">
-                <div className="stars">
-                </div>
-                <div className="rating-score">4.9/5.0</div>
-                <div className="rating-count">from 2,847 reviews</div>
-              </div>
+        <div className="testimonials-header">
+          <h2 className="section-heading">Loved by teams everywhere</h2>
+          <p className="section-subheading">
+            See what our community has to say about Helios
+          </p>
+        </div>
 
-              <h2 className="testimonials-headline">
-                Developers Love
-                <span className="gradient-text"> Building with Helios</span>
-              </h2>
-
-              <div className="testimonials-stats-grid">
-                <div className="stat-box">
-              
-                  <div className="stat-metric">10x</div>
-                  <div className="stat-text">Faster Development</div>
+        <div className="testimonials-container">
+          <div className="testimonials-cards-stack">
+            <div className="testimonial-card-v3 card-stack-1">
+              <p className="card-quote">
+                Helios transformed how our remote team communicates. The real-time chat and 
+                task management features keep everyone aligned. Can't imagine working without it!
+              </p>
+              <div className="card-author">
+                <div className="author-info">
+                  <div className="author-name-v3">Sarah Mitchell</div>
+                  <div className="author-title-v3">Team Lead @ DesignCo</div>
                 </div>
-                <div className="stat-box">
-                  <div className="stat-metric">98%</div>
-                  <div className="stat-text">Satisfaction Rate</div>
-                </div>
-                <div className="stat-box">
-                  <div className="stat-metric">50K+</div>
-                  <div className="stat-text">Apps Deployed</div>
-                </div>
-              </div>
-
-              <div className="code-snippet-review">
-                <div className="snippet-header">
-                  <div className="snippet-dots">
-                    <span></span><span></span><span></span>
-                  </div>
-                  <span className="snippet-title">developer_review.js</span>
-                </div>
-                <pre className="snippet-code">
-{`const review = {
-  platform: "Helios",
-  rating: 5,
-  would_recommend: true,
-  comment: "Game changer! 🚀"
-};`}</pre>
               </div>
             </div>
 
-            <div className="testimonials-cards-stack">
-              <div className="testimonial-card-v3 card-stack-1">
-                <div className="card-quote-icon">"</div>
-                <p className="card-quote">
-                  Helios transformed our entire development workflow. We're shipping features 
-                  10x faster than before, and the code quality is actually better.
-                </p>
-                <div className="card-author">
-                  <div className="author-avatar-v3">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect fill='%23646cff' width='40' height='40'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold'%3ESM%3C/text%3E%3C/svg%3E" alt="SM" />
-                  </div>
-                  <div>
-                    <div className="author-name-v3">Sarah Mitchell</div>
-                    <div className="author-title-v3">Lead Developer @ TechCorp</div>
-                  </div>
+            <div className="testimonial-card-v3 card-stack-2">
+              <p className="card-quote">
+                The AI chatbot is incredibly helpful for quick questions, and having everything 
+                in one place - chat, tasks, files - makes collaboration so much smoother.
+              </p>
+              <div className="card-author">
+                <div className="author-info">
+                  <div className="author-name-v3">James Davidson</div>
+                  <div className="author-title-v3">Project Manager @ StartupHub</div>
                 </div>
-                <div className="card-badge-verified">✓ Verified User</div>
               </div>
+            </div>
 
-              <div className="testimonial-card-v3 card-stack-2">
-                <div className="card-quote-icon">"</div>
-                <p className="card-quote">
-                  I was skeptical about AI coding tools, but Helios is different. It understands 
-                  context, writes clean code, and actually saves me hours every day.
-                </p>
-                <div className="card-author">
-                  <div className="author-avatar-v3">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect fill='%2341d1ff' width='40' height='40'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold'%3EJD%3C/text%3E%3C/svg%3E" alt="JD" />
-                  </div>
-                  <div>
-                    <div className="author-name-v3">James Davidson</div>
-                    <div className="author-title-v3">Senior Engineer @ StartupXYZ</div>
-                  </div>
+            <div className="testimonial-card-v3 card-stack-3">
+              <p className="card-quote">
+                Our student group uses Helios for all our projects. The room feature is perfect 
+                for group work, and sharing posts keeps everyone updated. Highly recommend!
+              </p>
+              <div className="card-author">
+                <div className="author-info">
+                  <div className="author-name-v3">Maria Chen</div>
+                  <div className="author-title-v3">Student @ University</div>
                 </div>
-                <div className="card-badge-verified">✓ Verified User</div>
-              </div>
-
-              <div className="testimonial-card-v3 card-stack-3">
-                <div className="card-quote-icon">"</div>
-                <p className="card-quote">
-                  The real-time collaboration features are phenomenal. Our remote team feels 
-                  more connected than ever. Best investment we've made this year!
-                </p>
-                <div className="card-author">
-                  <div className="author-avatar-v3">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect fill='%23a855f7' width='40' height='40'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-weight='bold'%3EMC%3C/text%3E%3C/svg%3E" alt="MC" />
-                  </div>
-                  <div>
-                    <div className="author-name-v3">Maria Chen</div>
-                    <div className="author-title-v3">Product Manager @ InnovateLabs</div>
-                  </div>
-                </div>
-                <div className="card-badge-verified">✓ Verified User</div>
               </div>
             </div>
           </div>
-        </section>
+
+          <div className="testimonials-stats-grid">
+            <div className="stats-card">
+              <div className="stats-number">4.9/5</div>
+              <div className="stats-label">Average Rating</div>
+              <div className="stats-stars">★★★★★</div>
+            </div>
+            <div className="stats-card">
+              <div className="stats-number">1000+</div>
+              <div className="stats-label">Active Teams</div>
+              <div className="stats-trend">↑ 120% growth</div>
+            </div>
+            <div className="stats-card">
+              <div className="stats-number">50K+</div>
+              <div className="stats-label">Daily Messages</div>
+              <div className="stats-pulse">
+                <span className="pulse-dot"></span>
+                Live
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section - Full Width */}
       <section className="cta-section">
-          <div className="cta-box">
-            <h2 className="cta-headline">Start building with Helios</h2>
+        <div className="cta-box">
+          <h2 className="cta-headline">Start collaborating today</h2>
             <p className="cta-description">
-              Prepare for a collaboration environment that can finally keep pace with your team's speed.
+              Join thousands of teams who trust Helios for seamless communication and project management. 
+              Get started in minutes—no credit card required.
             </p>
             <Link to={user ? "/dashboard" : "/register"} className="btn-primary btn-large">
-              <span>{user ? 'Open Dashboard' : 'Get Started for Free'}</span>
+              <span>{user ? 'Go to Dashboard' : 'Get Started Free'}</span>
               <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
                 <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="2"/>
               </svg>
@@ -715,18 +639,29 @@ typing indicators"`}</pre>
                 <a href="#">Privacy</a>
                 <a href="#">Terms</a>
                 <a href="#">Security</a>
-                <a href="#">Cookies</a>
+                <a href="#">Compliance</a>
               </div>
             </div>
           </div>
 
           <div className="footer-bottom">
-            <p>&copy; 2026 Helios. Built with ❤️ using React & Vite.</p>
-            <div className="social-links">
-              <a href="#">GitHub</a>
-              <a href="#">Twitter</a>
-              <a href="#">Discord</a>
-              <a href="#">LinkedIn</a>
+            <p className="copyright">&copy; 2024 Helios. All rights reserved.</p>
+            <div className="footer-social">
+              <a href="#" className="social-link" aria-label="Twitter">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/>
+                </svg>
+              </a>
+              <a href="#" className="social-link" aria-label="GitHub">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                </svg>
+              </a>
+              <a href="#" className="social-link" aria-label="LinkedIn">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+              </a>
             </div>
           </div>
         </div>

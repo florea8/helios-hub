@@ -3,15 +3,14 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const { AppError, asyncHandler } = require('../middleware/errorHandler');
+const logger = require('../utils/logger');
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
-exports.register = async (req, res) => {
+exports.register = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
-
-  if (!username || !email || !password) {
-    return res.status(400).json({ message: 'Missing fields' });
-  }
 
   try {
     const passwordHash = await bcrypt.hash(password, 10);
@@ -19,37 +18,40 @@ exports.register = async (req, res) => {
     const stmt = db.prepare('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)');
     stmt.run(username, email, passwordHash, 'NORMAL');
 
+    logger.info('User registered successfully', { email, username });
     res.status(201).json({ message: 'User created' });
   } catch (err) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-      res.status(409).json({ message: 'User already exists' });
-    } else {
-      res.status(500).json({ message: 'DB error' });
+      throw new AppError('User already exists', 409);
     }
+    throw err;
   }
-};
+});
+
 // LOGIN
-exports.login = async (req, res) => {
+exports.login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
   const user = stmt.get(email);
 
   if (!user) {
-    return res.status(401).json({ message: 'Invalid credentials' });
+    throw new AppError('Invalid credentials', 401);
   }
 
   const valid = await bcrypt.compare(password, user.password_hash);
 
   if (!valid) {
-    return res.status(401).json({ message: 'Invalid credentials' });
+    throw new AppError('Invalid credentials', 401);
   }
 
   const token = jwt.sign(
     { id: user.id, role: user.role },
     JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: JWT_EXPIRES_IN }
   );
+
+  logger.info('User logged in successfully', { userId: user.id, email });
 
   res.json({
     token,
@@ -61,7 +63,7 @@ exports.login = async (req, res) => {
       profile_picture: user.profile_picture
     }
   });
-};
+});
 
 // Upload profile picture
 exports.uploadProfilePicture = async (req, res) => {
@@ -134,7 +136,7 @@ exports.uploadProfilePicture = async (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const user = db.prepare('SELECT id, username, email, profile_picture, role, created_at FROM users WHERE id = ?').get(userId);
+    const user = db.prepare('SELECT id, username, email, profile_picture, role, points, created_at FROM users WHERE id = ?').get(userId);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });

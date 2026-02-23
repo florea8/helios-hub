@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import NotificationPanel from '../components/NotificationPanel';
 import '../styles/PostDetail.css';
 
 export default function PostDetail() {
@@ -189,7 +190,7 @@ export default function PostDetail() {
         </div>
         <div className="post-detail-error">
           <h2>Post not found</h2>
-          <Link to="/posts" className="post-detail-back-link">Back to Posts</Link>
+          <Link to="/dashboard" className="post-detail-back-link">Back to Feed</Link>
         </div>
       </div>
     );
@@ -227,7 +228,7 @@ export default function PostDetail() {
             </svg>
             <span className="post-detail-brand-name">Helios</span>
           </Link>
-          <Link to="/posts" className="post-detail-back-btn">← Back to Posts</Link>
+          <Link to="/dashboard" className="post-detail-back-btn">← Back to Feed</Link>
         </div>
       </header>
 
@@ -246,7 +247,9 @@ export default function PostDetail() {
             <div className="post-detail-meta">
               <div className="post-detail-meta-item">
                 <span className="post-detail-meta-label">Author</span>
-                <span className="post-detail-meta-value">{post.username}</span>
+                <Link to={`/profile/${post.user_id}`} className="post-detail-meta-value" style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
+                  {post.username}
+                </Link>
               </div>
               <div className="post-detail-meta-item">
                 <span className="post-detail-meta-label">Created</span>
@@ -284,7 +287,7 @@ export default function PostDetail() {
                             onClick={() => handleRemoveTag(tag.id)}
                             className="post-detail-tag-remove"
                           >
-                            ✕
+                            &times;
                           </button>
                         )}
                       </div>
@@ -407,9 +410,9 @@ export default function PostDetail() {
                 {ratings.map((rating) => (
                   <div key={rating.id} className="post-detail-rating-card">
                     <div className="post-detail-rating-top">
-                      <div className="post-detail-rating-author">
+                      <Link to={`/profile/${rating.rated_user_id}`} className="post-detail-rating-author" style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
                         {rating.rated_username}
-                      </div>
+                      </Link>
                       <div className="post-detail-rating-score">
                         {'⭐'.repeat(rating.score)} ({rating.score}/5)
                       </div>
@@ -491,10 +494,10 @@ export default function PostDetail() {
             {isOwner && (
               <>
                 <button className="post-detail-action-btn post-detail-action-edit">
-                  ✏️ Edit Post
+                  Edit Post
                 </button>
                 <button className="post-detail-action-btn post-detail-action-delete">
-                  🗑️ Delete Post
+                  Delete Post
                 </button>
               </>
             )}

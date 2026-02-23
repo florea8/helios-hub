@@ -1,7 +1,7 @@
 /* Friends Container */
 .friends-container {
   min-height: 100vh;
-  background: #0a0a0f;
+  background: var(--bg-primary);
   color: #e5e5ea;
   position: relative;
   overflow-x: hidden;
@@ -62,13 +62,13 @@
   width: 100%;
   z-index: 1000;
   transition: all 0.3s ease;
-  background: rgba(10, 10, 15, 0.3);
+  background: rgba(var(--bg-primary-rgb), 0.3);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(100, 108, 255, 0.1);
 }
 
 .friends-header-scrolled {
-  background: rgba(10, 10, 15, 0.95);
+  background: rgba(var(--bg-primary-rgb), 0.95);
   backdrop-filter: blur(20px);
   border-bottom-color: rgba(100, 108, 255, 0.2);
 }
@@ -103,7 +103,7 @@
 .friends-brand-name {
   font-size: 1.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #646cff 0%, #41d1ff 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -129,12 +129,12 @@
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, #646cff, #41d1ff);
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
   transition: width 0.3s ease;
 }
 
 .friends-nav-item:hover {
-  color: #41d1ff;
+  color: var(--accent-color);
 }
 
 .friends-nav-item:hover::after {
@@ -204,13 +204,13 @@
 
 .friends-tab:hover {
   background: rgba(100, 108, 255, 0.1);
-  color: #646cff;
+  color: var(--primary-color);
 }
 
 .friends-tab.active {
   background: rgba(100, 108, 255, 0.2);
   border-color: rgba(100, 108, 255, 0.4);
-  color: #646cff;
+  color: var(--primary-color);
 }
 
 .friends-tab .notification-badge,
@@ -219,7 +219,7 @@
   top: -5px;
   right: -5px;
   background: linear-gradient(135deg, #ff4444, #ff0066);
-  color: white;
+  color: var(--text-on-primary);
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 10px;
@@ -243,7 +243,7 @@
   right: 12px;
   transform: translateY(-50%);
   background: linear-gradient(135deg, #ff4444, #ff0066);
-  color: white;
+  color: var(--text-on-primary);
   font-size: 11px;
   font-weight: 700;
   padding: 3px 7px;
@@ -272,6 +272,26 @@
   transition: all 0.3s ease;
 }
 
+[data-theme='light'] .accept-btn {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+[data-theme='light'] .accept-btn:hover {
+  background: rgba(34, 197, 94, 0.25);
+}
+
+[data-theme='light'] .reject-btn {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+[data-theme='light'] .reject-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
 .accept-btn {
   background: rgba(76, 175, 80, 0.2);
   color: #4caf50;
@@ -296,13 +316,36 @@
   gap: 0.5rem;
 }
 
+[data-theme='light'] .friends-search-input {
+  background: var(--bg-secondary);
+  border: 1px solid #e2e8f0;
+  color: var(--text-primary);
+}
+
+[data-theme='light'] .friends-search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+[data-theme='light'] .friends-search-btn,
+[data-theme='light'] .add-friend-button {
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  border: 1px solid var(--primary-color);
+  color: #ffffff;
+}
+
+[data-theme='light'] .friends-search-btn:hover,
+[data-theme='light'] .add-friend-button:hover {
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
+}
+
 .friends-search-input {
   flex: 1;
   padding: 0.75rem;
   background: rgba(100, 108, 255, 0.05);
   border: 1px solid rgba(100, 108, 255, 0.2);
   border-radius: 8px;
-  color: white;
+  color: var(--text-on-primary);
   font-size: 0.9rem;
 }
 
@@ -315,7 +358,7 @@
   background: rgba(100, 108, 255, 0.2);
   border: 1px solid rgba(100, 108, 255, 0.4);
   border-radius: 8px;
-  color: #646cff;
+  color: var(--primary-color);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -330,7 +373,7 @@
   background: rgba(100, 108, 255, 0.2);
   border: 1px solid rgba(100, 108, 255, 0.4);
   border-radius: 6px;
-  color: #646cff;
+  color: var(--primary-color);
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -352,7 +395,7 @@
   border-radius: 8px;
   background: rgba(100, 108, 255, 0.2);
   border: 1px solid rgba(100, 108, 255, 0.4);
-  color: #646cff;
+  color: var(--primary-color);
   font-size: 1.25rem;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -415,12 +458,12 @@
   width: 48px;
   height: 48px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #646cff, #41d1ff);
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: white;
+  color: var(--text-on-primary);
   font-size: 1.25rem;
   flex-shrink: 0;
   position: relative;
@@ -433,7 +476,7 @@
   width: 14px;
   height: 14px;
   background: #34c759;
-  border: 2px solid #0a0a0f;
+  border: 2px solid var(--bg-primary);
   border-radius: 50%;
   animation: friendsPulse 2s ease-in-out infinite;
 }
@@ -465,7 +508,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: rgba(10, 10, 15, 0.5);
+  background: rgba(var(--bg-primary-rgb), 0.5);
 }
 
 .chat-header {
@@ -540,8 +583,8 @@
 .chat-message.own {
   align-self: flex-end;
   margin-left: auto;
-  background: linear-gradient(135deg, #646cff, #41d1ff);
-  color: #fff;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  color: var(--text-primary);
   border-radius: 12px 12px 4px 12px;
   box-shadow: 0 6px 16px rgba(100, 108, 255, 0.35);
 }
@@ -629,10 +672,10 @@
 
 .chat-send-btn {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #646cff, #41d1ff);
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
   border: none;
   border-radius: 8px;
-  color: white;
+  color: var(--text-on-primary);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -721,7 +764,7 @@
 /* Friends Container */
 .friends-container {
   min-height: 100vh;
-  background: #0a0a0f;
+  background: var(--bg-primary);
   color: #e5e5ea;
   position: relative;
   overflow-x: hidden;
@@ -782,13 +825,13 @@
   width: 100%;
   z-index: 1000;
   transition: all 0.3s ease;
-  background: rgba(10, 10, 15, 0.3);
+  background: rgba(var(--bg-primary-rgb), 0.3);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(100, 108, 255, 0.1);
 }
 
 .friends-header-scrolled {
-  background: rgba(10, 10, 15, 0.95);
+  background: rgba(var(--bg-primary-rgb), 0.95);
   backdrop-filter: blur(20px);
   border-bottom-color: rgba(100, 108, 255, 0.2);
 }
@@ -823,7 +866,7 @@
 .friends-brand-name {
   font-size: 1.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #646cff 0%, #41d1ff 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -849,12 +892,12 @@
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, #646cff, #41d1ff);
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
   transition: width 0.3s ease;
 }
 
 .friends-nav-item:hover {
-  color: #41d1ff;
+  color: var(--accent-color);
 }
 
 .friends-nav-item:hover::after {
@@ -890,7 +933,7 @@
   border: 1px solid rgba(100, 108, 255, 0.3);
   border-radius: 50px;
   font-size: 0.875rem;
-  color: #41d1ff;
+  color: var(--accent-color);
   margin-bottom: 1.5rem;
   backdrop-filter: blur(10px);
 }
@@ -898,7 +941,7 @@
 .friends-badge-pulse {
   width: 8px;
   height: 8px;
-  background: #41d1ff;
+  background: var(--accent-color);
   border-radius: 50%;
   animation: friendsPulse 2s ease-in-out infinite;
 }
@@ -922,7 +965,7 @@
 }
 
 .friends-title-gradient {
-  background: linear-gradient(135deg, #646cff 0%, #41d1ff 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -972,7 +1015,7 @@
 }
 
 .friends-tab-active {
-  color: #fff;
+  color: var(--text-primary);
   background: rgba(100, 108, 255, 0.2);
   border: 1px solid rgba(100, 108, 255, 0.4);
 }
@@ -1023,6 +1066,25 @@
 }
 
 /* Friend Card */
+[data-theme='light'] .friends-card {
+  background: var(--bg-secondary);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .friends-card:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+[data-theme='light'] .friends-card-name {
+  color: var(--text-primary);
+}
+
+[data-theme='light'] .friends-card-email {
+  color: var(--text-secondary);
+}
+
 .friends-card {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(100, 108, 255, 0.2);
@@ -1069,13 +1131,13 @@
   width: 56px;
   height: 56px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #646cff, #41d1ff);
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
   flex-shrink: 0;
   box-shadow: 0 4px 16px rgba(100, 108, 255, 0.3);
 }
@@ -1132,7 +1194,7 @@
 
 .friends-status-value {
   font-size: 0.875rem;
-  color: #41d1ff;
+  color: var(--accent-color);
   font-weight: 600;
 }
 
@@ -1162,7 +1224,7 @@
 
 .friends-action-message {
   background: rgba(100, 108, 255, 0.2);
-  color: #646cff;
+  color: var(--primary-color);
   border: 1px solid rgba(100, 108, 255, 0.4);
 }
 
@@ -1209,7 +1271,7 @@
 
 .friends-action-add {
   background: rgba(100, 108, 255, 0.2);
-  color: #646cff;
+  color: var(--primary-color);
   border: 1px solid rgba(100, 108, 255, 0.4);
 }
 
@@ -1276,8 +1338,8 @@
 
 .friends-add-btn {
   padding: 0.75rem 2rem;
-  background: linear-gradient(135deg, #646cff, #41d1ff);
-  color: #fff;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  color: var(--text-primary);
   border: none;
   border-radius: 8px;
   font-size: 1rem;
@@ -1333,8 +1395,8 @@
 
 .friends-search-btn {
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, #646cff, #41d1ff);
-  color: #fff;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  color: var(--text-primary);
   border: none;
   border-radius: 12px;
   font-size: 1rem;

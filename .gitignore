@@ -16,15 +16,27 @@ backend/.env
 frontend/.env
 
 # Database & runtime storage
+*.db
+*.sqlite
+helios.db
 backend/helios.db
 backend/*.db
-backend/uploads/
+backend/uploads/profiles/*
+backend/uploads/room-files/*
+!backend/uploads/profiles/.gitkeep
+!backend/uploads/room-files/.gitkeep
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
+
+# Temp / scratch files
+temp_*.txt
+*.bak
+*.tmp
 
 # Editor/OS junk
 .vscode/
@@ -32,3 +44,4 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+desktop.ini

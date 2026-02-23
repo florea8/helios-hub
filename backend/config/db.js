@@ -1,4 +1,10 @@
 const Database = require('better-sqlite3');
-const db = new Database('./helios.db');
+const path = require('path');
+
+const dbPath = process.env.DATABASE_URL || './helios.db';
+const db = new Database(dbPath);
+
+// Enable foreign keys
+db.pragma('foreign_keys = ON');
 
 module.exports = db;

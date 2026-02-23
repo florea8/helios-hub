@@ -88,12 +88,34 @@ exports.sendMessage = async (req, res) => {
 // GET MESSAGES FOR ROOM
 exports.getMessagesForRoom = async (req, res) => {
   const { roomId } = req.params;
+  const { limit = 50, offset = 0 } = req.query;
+  
+  const limitNum = parseInt(limit);
+  const offsetNum = parseInt(offset);
 
   try {
-    const stmt = db.prepare('SELECT m.*, u.username, u.profile_picture FROM messages m JOIN users u ON m.user_id = u.id WHERE m.room_id = ? ORDER BY m.created_at ASC');
-    const rows = stmt.all(roomId);
+    // Get total count
+    const countStmt = db.prepare('SELECT COUNT(*) as total FROM messages WHERE room_id = ?');
+    const { total } = countStmt.get(roomId);
 
-    res.json(rows);
+    // Get paginated messages
+    const stmt = db.prepare(`
+      SELECT m.*, u.username, u.profile_picture 
+      FROM messages m 
+      JOIN users u ON m.user_id = u.id 
+      WHERE m.room_id = ? 
+      ORDER BY m.created_at ASC
+      LIMIT ? OFFSET ?
+    `);
+    const rows = stmt.all(roomId, limitNum, offsetNum);
+
+    res.json({
+      messages: rows,
+      total,
+      limit: limitNum,
+      offset: offsetNum,
+      hasMore: offsetNum + rows.length < total
+    });
   } catch (err) {
     res.status(500).json({ message: 'DB error' });
   }

@@ -30,11 +30,15 @@
     width: 100%;
     min-height: 100vh;
     padding: 2rem 0;
-    background: linear-gradient(135deg, #0a0a0f 0%, #1a1025 50%, #0f0a1f 100%);
+    background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1025 50%, #0f0a1f 100%);
     background-attachment: fixed;
     position: relative;
     overflow: hidden;
     z-index: 2;
+}
+
+[data-theme='light'] .register-container {
+    background: linear-gradient(135deg, #f0f4f8 0%, #d9e8f5 50%, #c3daf0 100%);
 }
 
 
@@ -59,6 +63,20 @@
     box-shadow: 0 0 40px rgba(0, 255, 255, 0.4), 0 0 60px rgba(255, 0, 255, 0.3);
 }
 
+[data-theme='light'] .register-box {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+[data-theme='light'] .register-box:hover {
+    box-shadow: 0 12px 48px rgba(99, 102, 241, 0.2);
+}
+
+[data-theme='light'] .glow-title {
+    text-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
 /* =========================
    🔹 TITLE
    ========================= */
@@ -66,7 +84,7 @@
     text-align: center;
     font-size: 2.4rem;
     margin-bottom: 1.5rem;
-    color: #fff;
+    color: var(--text-primary);
     text-shadow:
         0 0 8px #a855f7,
         0 0 16px #9333ea;
@@ -89,7 +107,7 @@
     outline: none;
     border: 1px solid rgba(255, 255, 255, 0.3);
     background: hsla(260, 15%, 10%, 0.7);
-    color: #fff;
+    color: var(--text-primary);
     transition: all 0.3s ease;
     backdrop-filter: blur(5px);
 }
@@ -97,6 +115,26 @@
 .input-box input:focus {
     border-color: #a855f7;
     box-shadow: 0 0 10px #a855f7;
+}
+
+[data-theme='light'] .input-box input {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e2e8f0;
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .input-box input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+[data-theme='light'] .input-box label {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .input-box input:focus + label,
+[data-theme='light'] .input-box input:valid + label {
+    color: var(--primary-color);
 }
 
 .input-box label {
@@ -114,19 +152,30 @@
 .input-box input:valid + label {
     top: -10px;
     font-size: 0.75rem;
-    color: #fff;
+    color: var(--text-primary);
 }
 
 /* =========================
    🔹 REGISTER BUTTON
    ========================= */
+[data-theme='light'] .btn {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+}
+
+[data-theme='light'] .btn:hover {
+    box-shadow: 0 6px 25px rgba(99, 102, 241, 0.4);
+    transform: translateY(-2px);
+}
+
 .btn {
     width: 100%;
     padding: 0.9rem;
     border: none;
     border-radius: 8px;
     background: linear-gradient(90deg, #a855f7, #06b6d4);
-    color: #fff;
+    color: var(--text-primary);
     font-size: 1.1rem;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -141,9 +190,18 @@
 /* =========================
    🔹 LOGIN LINK
    ========================= */
+[data-theme='light'] .register a {
+    color: var(--primary-color);
+}
+
+[data-theme='light'] .register a:hover {
+    color: var(--accent-color);
+    text-shadow: none;
+}
+
 .register {
     text-align: center;
-    color: #fff;
+    color: var(--text-primary);
     margin-top: 1.5rem;
 }
 
@@ -154,7 +212,7 @@
 }
 
 .register a:hover {
-    color: #fff;
+    color: var(--text-primary);
     text-shadow: 0 0 10px #06d6ff;
 }
 

@@ -1,19 +1,25 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import { NotificationProvider } from './context/NotificationContext';
 import NotificationToast from './components/NotificationToast';
+import LoadingSkeleton from './components/LoadingSkeleton';
+import './styles/animations.css';
+import './styles/responsive.css';
+
+// Eager load critical pages (authentication flow)
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Posts from './pages/Posts';
-import PostDetail from './pages/PostDetail';
-import Settings from './pages/Settings';
-import Rooms from './pages/Rooms';
-import Friends from './pages/Friends';
-import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
+
+// Lazy load all other pages
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Rooms = lazy(() => import('./pages/Rooms'));
+const Friends = lazy(() => import('./pages/Friends'));
+const Profile = lazy(() => import('./pages/Profile'));
+const UserProfile = lazy(() => import('./pages/UserProfile'));
+const Settings = lazy(() => import('./pages/Settings'));
 
 function App() {
   return (
@@ -22,19 +28,20 @@ function App() {
         <NotificationProvider>
           <Router>
             <NotificationToast />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/home" element={<Dashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/posts" element={<Posts />} />
-              <Route path="/posts/:id" element={<PostDetail />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/rooms" element={<Rooms />} />
-              <Route path="/friends" element={<Friends />} />
-            </Routes>
+            <Suspense fallback={<LoadingSkeleton type="page" count={1} />}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/home" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/:userId" element={<UserProfile />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/rooms" element={<Rooms />} />
+                <Route path="/friends" element={<Friends />} />
+              </Routes>
+            </Suspense>
           </Router>
         </NotificationProvider>
       </SocketProvider>
