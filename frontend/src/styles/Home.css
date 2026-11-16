@@ -404,6 +404,139 @@
   outline-offset: 2px;
 }
 
+/* 03: direct messages. The demo answers back. */
+
+.home-dm {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  align-items: center;
+}
+
+.home-dm > div:last-child,
+.home-points > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dm {
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.6fr);
+  box-shadow: 8px 8px 0 var(--tomato);
+}
+
+.dm-people {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-right: var(--line);
+}
+
+.dm-people li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: var(--line);
+}
+
+.dm-people [data-current] {
+  color: var(--on-color);
+  background: var(--yellow);
+}
+
+.dm-people i {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: var(--line);
+  border-radius: 50%;
+}
+
+.dm-people [data-online] {
+  background: var(--mint);
+}
+
+.dm-people div {
+  display: flex;
+  flex-direction: column;
+}
+
+.dm .room-chat {
+  height: 220px;
+  overflow-y: auto;
+  border: 0;
+}
+
+.dm .room-chat li {
+  align-self: flex-start;
+  animation: land 0.3s var(--spring) both;
+}
+
+.dm .room-chat [data-me] {
+  align-self: flex-end;
+  color: #fff;
+  background: var(--blue);
+}
+
+.dm .room-chat .label {
+  padding: 0;
+  color: var(--muted);
+  border: 0;
+}
+
+.dm form {
+  display: flex;
+  border-top: var(--line);
+}
+
+.dm form .field-input,
+.dm form .button {
+  border-width: 0;
+  box-shadow: none;
+  transform: none;
+}
+
+.dm form .button {
+  border-left: var(--line);
+}
+
+/* 04: points. The number pops when it changes. */
+
+.home-points {
+  align-items: center;
+}
+
+.home-score {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-score .button[aria-pressed='true'] {
+  color: var(--on-color);
+  background: var(--yellow);
+}
+
+.home .home-score p {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--ink);
+}
+
+.home-score b {
+  font: 900 clamp(4rem, 9vw, 7rem) / 1 var(--font-display);
+  font-stretch: 118%;
+  animation: pop 0.4s var(--spring);
+}
+
+@keyframes pop {
+  from {
+    scale: 0.7;
+  }
+}
+
 /* Three lines of very large type, each with its own shape. */
 
 .home-words {
@@ -467,6 +600,55 @@
   box-shadow: 4px 4px 0 var(--on-color);
 }
 
+/* Footer */
+
+.home-footer {
+  padding-block: 48px 24px;
+  border-top: var(--line);
+}
+
+.home-footer > div {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(3, 1fr);
+  gap: 32px;
+  padding-bottom: 40px;
+}
+
+.home-footer > div > div {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 30ch;
+}
+
+.home-footer nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.home-footer nav .label {
+  color: var(--muted);
+}
+
+.home-footer nav a,
+.home-footer nav a:hover {
+  font-weight: 700;
+  color: var(--ink);
+  background: linear-gradient(var(--yellow), var(--yellow)) 0 100% / 0 3px no-repeat;
+  transition: background-size 0.2s;
+}
+
+.home-footer nav a:hover {
+  background-size: 100% 3px;
+}
+
+.home .home-footer > p {
+  padding-top: 20px;
+  border-top: 1px solid var(--grid);
+}
+
 /* The big lines slide in as they scroll into view, where the browser supports it. */
 
 @supports (animation-timeline: view()) {
@@ -486,7 +668,8 @@
 @media (max-width: 860px) {
   .home-hero,
   .home-explore,
-  .home-room {
+  .home-room,
+  .home-footer > div {
     grid-template-columns: minmax(0, 1fr);
     gap: 32px;
     padding-block: 48px;
@@ -505,8 +688,12 @@
     justify-self: start;
   }
 
-  .room {
+  .room:not(.dm) {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-dm > .dm {
+    order: 2;
   }
 
   .room-chat {

@@ -13,8 +13,8 @@
   background-size: 24px 24px;
 }
 
-.logo-mark,
-.logo-mark:hover {
+.paper .logo-mark,
+.paper .logo-mark:hover {
   display: inline-flex;
   align-items: center;
   align-self: flex-start;
