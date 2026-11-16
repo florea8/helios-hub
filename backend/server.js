@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
@@ -526,7 +525,7 @@ app.use('/uploads', cors(), express.static(path.join(__dirname, 'uploads'), {
 }));
 
 // Import rate limiters
-const { apiLimiter, authLimiter, createLimiter, messageLimiter } = require('./middleware/rateLimiter');
+const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
 
 // Apply global API rate limiter
 app.use('/api/', apiLimiter);
@@ -565,7 +564,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 const server = http.createServer(app);
-const io = initializeSocket(server);
+initializeSocket(server);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>

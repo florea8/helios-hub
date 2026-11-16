@@ -116,11 +116,3 @@ exports.deleteAllRead = (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
-// Helper: Send notification via Socket.io
-exports.sendSocketNotification = (io, userId, notification) => {
-  if (!io) return;
-  
-  // Emit to specific user
-  io.to(`user-${userId}`).emit('new_notification', notification);
-};

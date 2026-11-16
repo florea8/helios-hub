@@ -33,6 +33,3 @@ exports.authenticate = (req, res, next) => {
     return next(new AppError('Token invalid sau expirat', 401));
   }
 };
-
-// Alias for compatibility
-exports.authenticateToken = exports.authenticate;

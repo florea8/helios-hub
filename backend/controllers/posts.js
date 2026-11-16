@@ -132,33 +132,6 @@ exports.getPostById = async (req, res) => {
   }
 };
 
-// UPDATE POST STATUS
-exports.updatePostStatus = async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-  const userId = req.user.id;
-
-  if (!['OPEN', 'IN_PROGRESS', 'CLOSED'].includes(status)) {
-    return res.status(400).json({ message: 'Invalid status' });
-  }
-
-  try {
-    const stmtCheck = db.prepare('SELECT * FROM posts WHERE id = ? AND user_id = ?');
-    const post = stmtCheck.get(id, userId);
-
-    if (!post) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-
-    const stmtUpdate = db.prepare('UPDATE posts SET status = ? WHERE id = ?');
-    stmtUpdate.run(status, id);
-
-    res.json({ message: 'Status updated' });
-  } catch (err) {
-    res.status(500).json({ message: 'DB error' });
-  }
-};
-
 // UPDATE POST
 exports.updatePost = async (req, res) => {
   const { id } = req.params;

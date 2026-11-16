@@ -46,58 +46,6 @@ const schemas = {
     description: Joi.string().max(500).allow('', null),
     postId: Joi.number().integer().positive().required()
   }),
-
-  // Message schemas
-  sendMessage: Joi.object({
-    content: Joi.string().min(1).max(2000).when('file', {
-      is: Joi.exist(),
-      then: Joi.optional(),
-      otherwise: Joi.required()
-    }),
-    file: Joi.any().optional()
-  }),
-
-  // Friend request schema
-  sendFriendRequest: Joi.object({
-    receiverId: Joi.number().integer().positive().required()
-  }),
-
-  // Rating schema
-  rateUser: Joi.object({
-    score: Joi.number().integer().min(1).max(5).required(),
-    comment: Joi.string().max(500).allow('', null)
-  }),
-
-  // Task schemas
-  createTask: Joi.object({
-    title: Joi.string().min(3).max(200).required(),
-    description: Joi.string().max(1000).allow('', null),
-    priority: Joi.string().valid('LOW', 'MEDIUM', 'HIGH').default('MEDIUM'),
-    deadline: Joi.date().iso().allow(null)
-  }),
-
-  updateTask: Joi.object({
-    title: Joi.string().min(3).max(200),
-    description: Joi.string().max(1000).allow('', null),
-    status: Joi.string().valid('TODO', 'IN_PROGRESS', 'DONE'),
-    priority: Joi.string().valid('LOW', 'MEDIUM', 'HIGH'),
-    deadline: Joi.date().iso().allow(null)
-  }).min(1),
-
-  // Tag schema
-  createTag: Joi.object({
-    name: Joi.string().min(2).max(50).required(),
-    color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).allow(null)
-  }),
-
-  // Profile update schema
-  updateProfile: Joi.object({
-    username: Joi.string().alphanum().min(3).max(30),
-    email: Joi.string().email(),
-    currentPassword: Joi.string().min(6),
-    newPassword: Joi.string().min(6),
-    profile_picture: Joi.string().allow(null, '')
-  }).min(1)
 };
 
 // Validation middleware
@@ -108,8 +56,6 @@ const validate = (schemaName) => {
     if (!schema) {
       return res.status(500).json({ error: 'Validation schema not found' });
     }
-
-    console.log(`[Validation] Schema: ${schemaName}, Body:`, req.body);
 
     const { error, value } = schema.validate(req.body, {
       abortEarly: false,
@@ -135,31 +81,6 @@ const validate = (schemaName) => {
   };
 };
 
-// Query parameter validation
-const validateQuery = (schema) => {
-  return (req, res, next) => {
-    const { error, value } = schema.validate(req.query, {
-      abortEarly: false,
-      stripUnknown: true
-    });
-
-    if (error) {
-      const errors = error.details.map(detail => ({
-        field: detail.path.join('.'),
-        message: detail.message
-      }));
-      
-      return res.status(400).json({ 
-        error: 'Query validation failed',
-        details: errors
-      });
-    }
-
-    req.query = value;
-    next();
-  };
-};
-
 // ID parameter validation
 const validateId = (paramName = 'id') => {
   return (req, res, next) => {
@@ -177,4 +98,4 @@ const validateId = (paramName = 'id') => {
   };
 };
 
-module.exports = { validate, validateQuery, validateId, schemas };
+module.exports = { validate, validateId };

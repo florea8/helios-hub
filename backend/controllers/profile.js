@@ -404,6 +404,3 @@ const logActivity = (userId, activityType, activityData) => {
     console.error('Failed to log activity:', err);
   }
 };
-
-// Export helper for use in other controllers
-exports.logActivity = logActivity;
