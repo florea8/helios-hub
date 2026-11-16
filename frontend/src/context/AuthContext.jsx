@@ -19,12 +19,12 @@ export const AuthProvider = ({ children }) => {
         id: payload.id,
         role: payload.role
       };
-    } catch (e) {
+    } catch {
       return null;
     }
   };
 
-  const fetchUserProfile = async (token) => {
+  const fetchUserProfile = async () => {
     try {
       const res = await api.get('/api/auth/profile');
       return res.data;
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         const decoded = decodeToken(token);
         if (decoded) {
-          const profile = await fetchUserProfile(token);
+          const profile = await fetchUserProfile();
           if (profile) {
             setUser({ token, ...decoded, ...profile });
           } else {
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (token) => {
     localStorage.setItem('token', token);
     const decoded = decodeToken(token);
-    const profile = await fetchUserProfile(token);
+    const profile = await fetchUserProfile();
     if (profile) {
       setUser({ token, ...decoded, ...profile });
     } else {

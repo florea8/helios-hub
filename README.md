@@ -1,5 +1,7 @@
 # Helios
 
+[![CI](https://github.com/florea8/helios-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/florea8/helios-hub/actions/workflows/ci.yml)
+
 A collaborative platform for students — featuring real-time messaging, study rooms, posts, task management, a friend system, and an AI-powered chatbot.
 
 ## Tech Stack
@@ -57,7 +59,7 @@ helios/
 
 ### Prerequisites
 
-- Node.js ≥ 18
+- Node.js ≥ 20.19
 - npm ≥ 9
 
 ### Installation

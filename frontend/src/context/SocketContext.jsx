@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
@@ -15,6 +16,7 @@ export const useSocket = () => {
 export const SocketProvider = ({ children }) => {
   const { user } = useAuth();
   const socketRef = useRef(null);
+  const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [connected, setConnected] = useState(false);
 
@@ -32,6 +34,7 @@ export const SocketProvider = ({ children }) => {
 
     newSocket.on('connect', () => {
       console.log('Socket.io connected');
+      setSocket(newSocket);
       setConnected(true);
     });
 
@@ -68,6 +71,7 @@ export const SocketProvider = ({ children }) => {
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
+        setSocket(null);
       }
     };
   }, [user?.token]);
@@ -97,7 +101,7 @@ export const SocketProvider = ({ children }) => {
   };
 
   const value = {
-    socket: socketRef.current,
+    socket,
     connected,
     onlineUsers,
     sendMessage,
