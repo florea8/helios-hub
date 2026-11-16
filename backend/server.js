@@ -206,9 +206,6 @@ try {
 
 // Migration: Add room tasks table
 try {
-  // Drop old table if it exists with old schema
-  db.prepare(`DROP TABLE IF EXISTS room_tasks`).run();
-  
   db.prepare(`CREATE TABLE IF NOT EXISTS room_tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     room_id INTEGER NOT NULL,

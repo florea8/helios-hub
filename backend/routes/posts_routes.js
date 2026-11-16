@@ -20,7 +20,4 @@ router.get('/:id/comments', validateId(), postsController.getComments);
 router.post('/:id/comments', authenticate, validateId(), validate('addComment'), postsController.addComment);
 router.delete('/comments/:commentId', authenticate, validateId('commentId'), postsController.deleteComment);
 
-// Recalculate points for all users based on existing likes and comments
-router.post('/admin/recalculate-points', authenticate, postsController.recalculateAllPoints);
-
 module.exports = router;
