@@ -1,0 +1,92 @@
+/* One-to-one chat window, used in the feed pop-up and on the friends page. */
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface);
+  border: var(--line);
+}
+
+.chat-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  color: var(--on-color);
+  background: var(--yellow);
+  border-bottom: var(--line);
+}
+
+.chat-header-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-close {
+  width: 28px;
+  height: 28px;
+  font-size: 1.25rem;
+  line-height: 1;
+  border: 2px solid var(--on-color);
+}
+
+.chat-close:hover {
+  color: var(--yellow);
+  background: var(--on-color);
+}
+
+.chat-messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.chat-empty {
+  margin: auto;
+  color: var(--muted);
+  text-align: center;
+}
+
+.chat-message {
+  align-self: flex-start;
+  max-width: 80%;
+  padding: 8px 10px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  border: var(--line);
+  animation: land 0.25s var(--spring) both;
+}
+
+.chat-message[data-me] {
+  align-self: flex-end;
+  color: #fff;
+  background: var(--blue);
+}
+
+.chat-input-area {
+  display: flex;
+  border-top: var(--line);
+}
+
+.chat-input-area .chat-input,
+.chat-input-area .button {
+  height: auto;
+  min-height: 46px;
+  border: 0;
+  box-shadow: none;
+  transform: none;
+}
+
+.chat-input-area .chat-input {
+  padding-block: 12px;
+  resize: none;
+}
+
+.chat-input-area .button {
+  border-left: var(--line);
+}

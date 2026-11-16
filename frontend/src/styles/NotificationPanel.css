@@ -1,235 +1,128 @@
+/* Bell and its drop-down list. */
+
 .notification-panel {
   position: relative;
-  display: inline-block;
 }
 
 .notification-bell {
   position: relative;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  cursor: pointer;
-  padding: 10px;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.8);
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: var(--line);
 }
 
 .notification-bell:hover {
-  background: rgba(100, 108, 255, 0.1);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  transform: translateY(-2px);
+  color: var(--on-color);
+  background: var(--yellow);
 }
 
 .notification-bell svg {
-  display: block;
+  width: 18px;
+  height: 18px;
 }
 
-.notification-bell .notification-badge {
+.notification-badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  background: linear-gradient(135deg, #ff4458, #ff6b7a);
-  color: var(--text-on-primary);
-  border-radius: 12px;
-  padding: 2px 6px;
-  font-size: 10px;
-  font-weight: 700;
+  top: -8px;
+  right: -8px;
   min-width: 18px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(255, 68, 88, 0.4);
-  border: 2px solid #1a1a2e;
+  padding: 0 4px;
+  font: 600 0.6875rem / 16px var(--font-mono);
+  color: #fff;
+  background: var(--tomato);
+  border: var(--line);
 }
 
 .notification-dropdown {
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  width: 400px;
-  max-height: 550px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 1px solid rgba(100, 108, 255, 0.2);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
-              0 0 0 1px rgba(255, 255, 255, 0.05);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  backdrop-filter: blur(20px);
-  animation: slideDown 0.3s ease;
+  z-index: 20;
+  width: min(380px, 92vw);
+  background: var(--surface);
+  border: var(--line);
+  box-shadow: 6px 6px 0 var(--ink);
+  animation: land 0.25s var(--spring) both;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.notification-header {
+.notification-header,
+.notification-filters {
   display: flex;
-  justify-content: space-between;
+  gap: 8px;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid rgba(100, 108, 255, 0.1);
-  background: rgba(255, 255, 255, 0.02);
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: var(--line);
 }
 
 .notification-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  background: linear-gradient(135deg, var(--text-primary), var(--primary-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.mark-all-read-btn {
-  background: rgba(100, 108, 255, 0.1);
-  border: 1px solid rgba(100, 108, 255, 0.3);
-  color: var(--primary-color);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 8px;
-  transition: all 0.3s;
-}
-
-.mark-all-read-btn:hover {
-  background: var(--primary-color);
-  color: var(--text-on-primary);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
+  font-weight: 900;
+  font-stretch: 115%;
+  text-transform: uppercase;
 }
 
 .notification-filters {
-  display: flex;
-  gap: 10px;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(100, 108, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
+  justify-content: flex-start;
 }
 
-.notification-filters button {
-  flex: 1;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.6);
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all 0.3s;
+.notification-panel :is(.mark-all-read-btn, .notification-filters button) {
+  padding: 3px 8px;
+  font: 500 0.75rem var(--font-mono);
+  text-transform: uppercase;
+  border: var(--line);
 }
 
-.notification-filters button.active {
-  background: linear-gradient(135deg, var(--primary-color), #747bff);
-  color: var(--text-on-primary);
-  border-color: transparent;
-  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
-}
-
-.notification-filters button:hover:not(.active) {
-  background: rgba(100, 108, 255, 0.1);
-  border-color: rgba(100, 108, 255, 0.3);
-  color: rgba(255, 255, 255, 0.9);
+.notification-panel :is(.mark-all-read-btn, .notification-filters button):hover,
+.notification-filters .active {
+  color: var(--on-color);
+  background: var(--yellow);
 }
 
 .notification-list {
+  max-height: 400px;
   overflow-y: auto;
-  max-height: 420px;
-}
-
-.notification-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.notification-list::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.notification-list::-webkit-scrollbar-thumb {
-  background: rgba(100, 108, 255, 0.3);
-  border-radius: 10px;
-}
-
-.notification-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 108, 255, 0.5);
 }
 
 .notification-empty {
-  padding: 60px 20px;
+  padding: 28px 14px;
+  color: var(--muted);
   text-align: center;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.notification-empty p {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
 }
 
 .notification-item {
   display: flex;
-  gap: 14px;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(100, 108, 255, 0.05);
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--grid);
   cursor: pointer;
-  transition: all 0.3s;
-  position: relative;
-  background: rgba(255, 255, 255, 0.01);
 }
 
 .notification-item:hover {
-  background: rgba(100, 108, 255, 0.08);
-  transform: translateX(2px);
+  background: var(--paper);
 }
 
-.notification-item.unread {
-  background: rgba(100, 108, 255, 0.06);
-}
+/* Unread items carry a blue square in place of the read icon colour. */
 
-.notification-item.unread::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--primary-color), #747bff);
-  border-radius: 0 4px 4px 0;
+.notification-item.unread .notification-icon {
+  color: #fff;
+  background: var(--blue);
 }
 
 .notification-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(100, 108, 255, 0.15), rgba(116, 123, 255, 0.1));
-  border: 1px solid rgba(100, 108, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--primary-color);
-  transition: all 0.3s;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: var(--line);
 }
 
-.notification-item:hover .notification-icon {
-  background: linear-gradient(135deg, rgba(100, 108, 255, 0.25), rgba(116, 123, 255, 0.15));
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.2);
+.notification-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .notification-content {
@@ -238,81 +131,38 @@
 }
 
 .notification-title {
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-  line-height: 1.3;
+  font-weight: 800;
 }
 
 .notification-message {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.65);
-  line-height: 1.5;
-  margin-bottom: 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
+  font-size: 0.9375rem;
+  color: var(--muted);
 }
 
 .notification-time {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font: 0.75rem var(--font-mono);
+  color: var(--muted);
 }
 
 .notification-actions {
   display: flex;
-  gap: 6px;
-  align-items: flex-start;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.notification-item:hover .notification-actions {
-  opacity: 1;
+  gap: 4px;
 }
 
 .notification-action-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.6);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: var(--line);
 }
 
 .notification-action-btn:hover {
-  background: rgba(100, 108, 255, 0.2);
-  color: var(--primary-color);
-  border-color: rgba(100, 108, 255, 0.4);
-  transform: translateY(-2px);
+  color: var(--on-color);
+  background: var(--yellow);
 }
 
 .notification-action-btn.delete:hover {
-  background: rgba(255, 68, 88, 0.2);
-  border-color: rgba(255, 68, 88, 0.4);
-  color: #ff4458;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .notification-dropdown {
-    width: 340px;
-    max-height: 480px;
-  }
-
-  .notification-list {
-    max-height: 360px;
-  }
+  color: #fff;
+  background: var(--tomato);
 }

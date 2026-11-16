@@ -531,12 +531,6 @@
   animation: pop 0.4s var(--spring);
 }
 
-@keyframes pop {
-  from {
-    scale: 0.7;
-  }
-}
-
 /* Three lines of very large type, each with its own shape. */
 
 .home-words {
@@ -609,7 +603,7 @@
 
 .home-footer > div {
   display: grid;
-  grid-template-columns: 1.6fr repeat(3, 1fr);
+  grid-template-columns: 2fr repeat(2, 1fr);
   gap: 32px;
   padding-bottom: 40px;
 }

@@ -357,12 +357,6 @@ const Home = () => {
             <Link to="/login">Sign in</Link>
             <Link to="/register">Create an account</Link>
           </nav>
-          <nav aria-label="Project">
-            <span className="label">Project</span>
-            <a href="https://github.com/florea8/helios-hub" target="_blank" rel="noreferrer">
-              Source on GitHub
-            </a>
-          </nav>
         </div>
         <p className="wrap label">Helios · 2026 · Built with React, Express and Socket.IO</p>
       </footer>

@@ -1,9 +1,13 @@
 import axios from 'axios';
 
-const api = axios.create({
-  // Fallback to local backend if env var missing so buttons like "Create Room" keep working
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000'
-});
+// Falls back to the local backend when the env var is missing.
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+const api = axios.create({ baseURL: API_URL });
+
+// Uploads are stored as paths relative to the API; data: and http URLs pass through.
+export const fileUrl = (path) =>
+  !path || /^(https?:|data:)/.test(path) ? path : `${API_URL}/${path}`;
 
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('token');

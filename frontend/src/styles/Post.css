@@ -1,0 +1,73 @@
+/* A post in the feed: a ruled row, not a card. */
+
+.post {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 16px;
+  padding: 20px 8px;
+  border-bottom: var(--line);
+  animation: land 0.4s var(--spring) both;
+}
+
+.post > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.post .label {
+  color: var(--muted);
+}
+
+.post .label a {
+  color: var(--ink);
+}
+
+.post h3 {
+  font-size: 1.1875rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.post > div > p:not(.label) {
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.post img:not(.avatar img) {
+  max-width: 100%;
+  max-height: 420px;
+  border: var(--line);
+}
+
+.post-tags,
+.post-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+}
+
+.post-like {
+  padding: 4px 10px;
+  font-weight: 800;
+  border: var(--line);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+
+.post-like:hover {
+  box-shadow: 3px 3px 0 var(--ink);
+  transform: translate(-1px, -1px);
+}
+
+.post-like[aria-pressed='true'] {
+  color: var(--on-color);
+  background: var(--yellow);
+}
+
+.post-like b {
+  display: inline-block;
+  animation: pop 0.35s var(--spring);
+}

@@ -1,86 +1,51 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import '../styles/PostCard.css';
+import { fileUrl } from '../services/api';
+import Avatar from './Avatar';
+import '../styles/Post.css';
 
-const PostCard = ({ 
-  post, 
-  onLike = null,
-  showImage = true,
-  compact = false 
-}) => {
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-  
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
-    return `${API_URL}/${imagePath}`;
-  };
+const formatDate = (date) =>
+  new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const getInitials = (username) => {
-    return username ? username[0].toUpperCase() : 'U';
-  };
-
-  return (
-    <article className="post-item">
-      <div className="post-top">
-        <div className="post-author-info">
-          <Link to={`/profile/${post.user_id}`}>
-            {post.profile_picture ? (
-              <img src={getImageUrl(post.profile_picture)} alt={post.username} className="author-pic" />
-            ) : (
-              <div className="author-pic">{getInitials(post.username)}</div>
-            )}
-          </Link>
-          <div className="author-details">
-            <Link to={`/profile/${post.user_id}`} className="author-name">{post.username}</Link>
-            <span className="post-time">{formatDate(post.created_at)}</span>
-          </div>
-        </div>
-      </div>
-
-      {post.title && post.post_type === 'room' && (
-        <h3 className="post-heading">{post.title}</h3>
-      )}
-      
-      {!compact && post.description && (
-        <p className="post-excerpt">{post.description}</p>
-      )}
-
-      {showImage && post.image && (
-        <div className="post-image-container">
-          <img 
-            src={getImageUrl(post.image)} 
-            alt={post.title || 'Post'} 
-            className="post-image"
-          />
+const PostCard = ({ post, onLike = null }) => (
+  <article className="post">
+    <Link to={`/profile/${post.user_id}`}>
+      <Avatar user={post} size={44} />
+    </Link>
+    <div>
+      <p className="label">
+        <Link to={`/profile/${post.user_id}`}>{post.username}</Link> · {formatDate(post.created_at)}
+      </p>
+      {post.title && <h3>{post.title}</h3>}
+      <p>{post.description}</p>
+      {post.image && <img src={fileUrl(post.image)} alt="" />}
+      {post.tags?.length > 0 && (
+        <div className="post-tags">
+          {post.tags.map((tag) => (
+            <span key={tag.id} className="tag" style={{ '--c': tag.color }}>
+              {tag.name}
+            </span>
+          ))}
         </div>
       )}
-
       <div className="post-actions">
-        <button onClick={() => onLike && onLike(post.id)} className="action-button">
-          <span>{post.user_liked ? 'Like' : 'Like'}</span>
-          <span>{post.like_count || 0}</span>
+        <button
+          type="button"
+          className="post-like"
+          aria-pressed={Boolean(post.user_liked)}
+          onClick={() => onLike?.(post.id)}
+        >
+          {/* The key replays the pop each time the count changes. */}
+          Like <b key={post.like_count}>{post.like_count || 0}</b>
         </button>
-        <Link to={`/posts/${post.id}`} className="action-button">
-          <span>Comments</span>
-          <span>{post.comment_count || 0}</span>
-        </Link>
+        <span className="label">{post.comment_count || 0} replies</span>
         {post.post_type === 'room' && (
-          <Link to={`/rooms?postId=${post.id}`} className="action-button">
-            Join Room →
+          <Link to={`/rooms?postId=${post.id}`} className="link">
+            Join room
           </Link>
         )}
       </div>
-    </article>
-  );
-};
+    </div>
+  </article>
+);
 
 export default PostCard;

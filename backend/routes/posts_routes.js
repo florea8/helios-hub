@@ -6,7 +6,7 @@ const { createLimiter } = require('../middleware/rateLimiter');
 const { validate, validateId } = require('../middleware/validation');
 
 router.post('/', authenticate, createLimiter, validate('createPost'), postsController.createPost);
-router.get('/', postsController.getPosts);
+router.get('/', authenticate, postsController.getPosts);
 router.get('/:id', validateId(), postsController.getPostById);
 router.put('/:id', authenticate, validateId(), validate('updatePost'), postsController.updatePost);
 router.delete('/:id', authenticate, validateId(), postsController.deletePost);

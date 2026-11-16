@@ -44,68 +44,30 @@
 }
 
 /* Apply fade-in to main content areas */
-.page-content,
-.dashboard-wrapper,
-.posts-container,
-.rooms-container,
-.friends-container {
+.dashboard-wrapper {
   animation: fadeIn 0.4s ease-out;
 }
 
 /* Cards and items */
-.post-card,
 .room-card,
-.user-card,
 .friends-list-item {
   animation: fadeIn 0.3s ease-out backwards;
 }
-
-/* Stagger animation for lists */
-.post-card:nth-child(1) { animation-delay: 0.05s; }
-.post-card:nth-child(2) { animation-delay: 0.1s; }
-.post-card:nth-child(3) { animation-delay: 0.15s; }
-.post-card:nth-child(4) { animation-delay: 0.2s; }
-.post-card:nth-child(5) { animation-delay: 0.25s; }
 
 .room-card:nth-child(1) { animation-delay: 0.05s; }
 .room-card:nth-child(2) { animation-delay: 0.1s; }
 .room-card:nth-child(3) { animation-delay: 0.15s; }
 
 /* Hover animations */
-.post-card,
 .room-card,
-.user-card,
 .btn,
 button {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.post-card:hover,
-.room-card:hover,
-.user-card:hover {
+.room-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
-}
-
-/* Modal animations */
-.modal {
-  animation: scaleIn 0.2s ease-out;
-}
-
-.modal-backdrop {
-  animation: fadeIn 0.2s ease-out;
-}
-
-/* Toast/Notification animations */
-.notification-toast {
-  animation: slideInRight 0.3s ease-out;
-}
-
-/* Skeleton shimmer (already defined in LoadingSkeleton.css) */
-
-/* Smooth height transitions */
-.collapsible {
-  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Focus animations */
@@ -124,9 +86,7 @@ button {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .post-card,
-  .room-card,
-  .user-card {
+  .room-card {
     animation-delay: 0s !important;
   }
 }
@@ -134,8 +94,8 @@ button {
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
-  *::before,
-  *::after {
+*::before,
+*::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

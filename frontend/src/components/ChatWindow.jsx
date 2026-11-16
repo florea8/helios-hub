@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import ChatMessage from './ChatMessage';
 import MessageInput from './MessageInput';
-import '../styles/ChatWindow.css';
+import '../styles/Chat.css';
 
 const ChatWindow = ({ 
   recipient, 
@@ -26,11 +26,11 @@ const ChatWindow = ({
       {/* Header */}
       <div className="chat-header">
         <div className="chat-header-info">
-          <h3>{recipient.username}</h3>
-          <p>{recipient.isOnline ? 'Online' : 'Offline'}</p>
+          <b>{recipient.username}</b>
+          <span className="label">{recipient.isOnline ? 'Online' : 'Offline'}</span>
         </div>
         {onClose && (
-          <button onClick={onClose} className="chat-remove-btn">&times;</button>
+          <button onClick={onClose} className="chat-close" aria-label="Close chat">&times;</button>
         )}
       </div>
 
@@ -40,7 +40,7 @@ const ChatWindow = ({
           <div className="chat-empty">Loading...</div>
         ) : messages.length === 0 ? (
           <div className="chat-empty">
-            <span className="select-icon"></span>
+            
             <p>No messages yet. Start the conversation!</p>
           </div>
         ) : (

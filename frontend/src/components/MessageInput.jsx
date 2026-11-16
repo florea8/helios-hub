@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import '../styles/MessageInput.css';
 
 const MessageInput = ({ 
   onSend, 
@@ -47,13 +46,13 @@ const MessageInput = ({
         disabled={disabled}
         maxLength={maxLength}
         rows={1}
-        className="chat-input"
+        className="field-input chat-input"
         style={{ maxHeight: '120px' }}
       />
       <button
         type="submit"
         disabled={!message.trim() || disabled}
-        className="chat-send-btn"
+        className="button button-primary"
       >
         Send
       </button>

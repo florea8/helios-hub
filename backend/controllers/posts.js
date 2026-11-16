@@ -88,6 +88,18 @@ exports.getPosts = async (req, res) => {
     `);
     const rows = userId ? stmt.all(userId, limitNum, offsetNum) : stmt.all(limitNum, offsetNum);
 
+    // One query for the tags of every post on the page, instead of one request per post.
+    const tagsByPost = new Map(rows.map((row) => [row.id, []]));
+    if (rows.length) {
+      const tagRows = db.prepare(`
+        SELECT pt.post_id, t.id, t.name, t.color
+        FROM post_tags pt JOIN tags t ON t.id = pt.tag_id
+        WHERE pt.post_id IN (${rows.map(() => '?').join(',')})
+      `).all(...rows.map((row) => row.id));
+      for (const { post_id, ...tag } of tagRows) tagsByPost.get(post_id).push(tag);
+    }
+    for (const row of rows) row.tags = tagsByPost.get(row.id);
+
     res.json({
       posts: rows,
       total,
