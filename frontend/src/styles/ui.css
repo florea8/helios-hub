@@ -207,6 +207,77 @@
   transform: rotate(-3deg) scale(1.05);
 }
 
+/* A band of interests that scrolls forever. */
+
+.ticker {
+  overflow: hidden;
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.ticker div {
+  display: flex;
+  gap: 32px;
+  width: max-content;
+  padding: 9px 0;
+  animation: ticker 60s linear infinite;
+}
+
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Page frame */
+
+.wrap {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--paper);
+  border-bottom: var(--line);
+}
+
+.topbar .wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 64px;
+}
+
+.topbar .logo-mark {
+  align-self: center;
+  margin-right: auto;
+}
+
+.topbar .button {
+  height: 38px;
+}
+
+.link,
+.link:hover {
+  font-weight: 800;
+  color: var(--ink);
+  background: linear-gradient(var(--yellow), var(--yellow)) 0 100% / 100% 3px no-repeat;
+  transition: background-size 0.2s;
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--on-color);
+  background-size: 100% 100%;
+  outline: none;
+}
+
 /* Inline messages */
 
 .notice {
@@ -222,6 +293,21 @@
 .notice-error {
   color: #fff;
   background: var(--tomato);
+}
+
+/* Entrances and idle motion shared by the pages. */
+
+@keyframes land {
+  from {
+    opacity: 0;
+    translate: 0 -50px;
+  }
+}
+
+@keyframes bob {
+  to {
+    translate: 0 -8px;
+  }
 }
 
 @keyframes drop {

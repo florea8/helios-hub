@@ -32,7 +32,7 @@ export default function Register() {
       subtitle="It takes less than a minute."
       footer={
         <>
-          Already have an account? <Link to="/login">Sign in</Link>
+          Already have an account? <Link to="/login" className="link">Sign in</Link>
         </>
       }
     >

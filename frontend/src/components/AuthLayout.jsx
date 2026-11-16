@@ -1,15 +1,9 @@
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
+import InterestTag from './InterestTag';
+import Ticker from './Ticker';
+import { INTERESTS } from '../interests';
 import '../styles/Auth.css';
-
-// Each interest has its own colour and shape, here and in the feed.
-const INTERESTS = [
-  { name: 'Electronics', color: '#2fd39a', shape: 'polygon(50% 0, 100% 100%, 0 100%)' },
-  { name: 'Photography', color: '#ffd60a', shape: 'circle(50%)' },
-  { name: 'Chess', color: '#ff8a7d', shape: 'inset(0)' },
-  { name: 'Open source', color: '#9db0ff', shape: 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)' },
-  { name: 'Music production', color: '#ffb3e6', shape: 'polygon(0 0, 100% 0, 50% 100%)' },
-];
 
 // right, bottom, size, colour, rotation, corner radius
 const SHAPES = [
@@ -31,10 +25,8 @@ const AuthLayout = ({ label, title, subtitle, children, footer }) => (
         solve problems and start projects.
       </p>
       <div className="auth-tags">
-        {INTERESTS.map(({ name, color, shape }) => (
-          <span key={name} className="tag" style={{ '--c': color, '--p': shape }}>
-            {name}
-          </span>
+        {INTERESTS.map((interest) => (
+          <InterestTag key={interest.name} interest={interest} />
         ))}
       </div>
       <div className="auth-shapes" aria-hidden="true">
@@ -53,13 +45,7 @@ const AuthLayout = ({ label, title, subtitle, children, footer }) => (
           />
         ))}
       </div>
-      <div className="auth-ticker label" aria-hidden="true">
-        <div>
-          {[...INTERESTS, ...INTERESTS, ...INTERESTS, ...INTERESTS].map(({ name }, i) => (
-            <span key={i}>{name}</span>
-          ))}
-        </div>
-      </div>
+      <Ticker />
     </aside>
 
     <main className="auth-main">

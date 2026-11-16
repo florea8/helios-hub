@@ -21,7 +21,7 @@ export default function Login() {
     try {
       const res = await api.post('/api/auth/login', { email, password });
       await login(res.data.token);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError(
         err.response?.status === 401
@@ -39,7 +39,7 @@ export default function Login() {
       subtitle="Sign in to pick up where you left off."
       footer={
         <>
-          New to Helios? <Link to="/register">Create an account</Link>
+          New to Helios? <Link to="/register" className="link">Create an account</Link>
         </>
       }
     >
