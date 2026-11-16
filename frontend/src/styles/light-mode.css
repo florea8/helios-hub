@@ -488,7 +488,7 @@
 /* ================================
    FORMS & INPUTS
    ================================ */
-[data-theme='light'] input,
+[data-theme='light'] input:not(.field-input),
 [data-theme='light'] textarea,
 [data-theme='light'] select {
   background: #ffffff;
@@ -497,7 +497,7 @@
   font-weight: 500;
 }
 
-[data-theme='light'] input:focus,
+[data-theme='light'] input:not(.field-input):focus,
 [data-theme='light'] textarea:focus,
 [data-theme='light'] select:focus {
   background: #ffffff;
@@ -505,7 +505,7 @@
   box-shadow: 0 0 0 4px rgba(91, 95, 199, 0.15), 0 2px 8px rgba(91, 95, 199, 0.2);
 }
 
-[data-theme='light'] input::placeholder,
+[data-theme='light'] input:not(.field-input)::placeholder,
 [data-theme='light'] textarea::placeholder {
   color: #8899a6;
   font-weight: 500;
@@ -514,7 +514,7 @@
 /* ================================
    BUTTONS
    ================================ */
-[data-theme='light'] button:not(.btn-primary):not(.btn-voice-join):not(.btn-voice-control):not(.btn-voice-disconnect) {
+[data-theme='light'] button:not(.button):not(.field-action):not(.theme-toggle):not(.btn-primary):not(.btn-voice-join):not(.btn-voice-control):not(.btn-voice-disconnect) {
   background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
   color: #0f1419;
   border: 1.5px solid #cfd9de;
@@ -522,7 +522,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-[data-theme='light'] button:not(.btn-primary):not(.btn-voice-join):not(.btn-voice-control):not(.btn-voice-disconnect):hover {
+[data-theme='light'] button:not(.button):not(.field-action):not(.theme-toggle):not(.btn-primary):not(.btn-voice-join):not(.btn-voice-control):not(.btn-voice-disconnect):hover {
   background: linear-gradient(135deg, #ffffff 0%, #e8ecf1 100%);
   border-color: #5b5fc7;
   box-shadow: 0 4px 12px rgba(91, 95, 199, 0.2);

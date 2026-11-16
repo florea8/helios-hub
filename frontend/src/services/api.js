@@ -13,4 +13,14 @@ api.interceptors.request.use(config => {
   return config;
 });
 
+// Picks the most specific message the API sent: a validation detail, then
+// the error text, then whatever plain-text body a rate limiter returned.
+export const errorMessage = (err, fallback) => {
+  const data = err.response?.data;
+  if (!data) return 'Could not reach the server. Check your connection and try again.';
+  if (typeof data === 'string') return data;
+  const detail = Array.isArray(data.details) ? data.details[0]?.message : null;
+  return detail || data.error || data.message || fallback;
+};
+
 export default api;

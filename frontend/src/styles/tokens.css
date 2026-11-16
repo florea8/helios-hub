@@ -1,0 +1,38 @@
+/*
+ * Design tokens. The look is a poster pinned to a workbench: flat colour,
+ * ink outlines and hard shadows on grid paper. Dark mode is the blueprint.
+ */
+
+:root {
+  --font-display: 'Archivo', system-ui, sans-serif;
+  --font-ui: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --yellow: #ffd60a;
+  --on-color: #0f1630; /* text on yellow and on the interest colours */
+
+  --line: 2px solid var(--ink);
+  --shadow: 4px 4px 0 var(--ink);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Blueprint (dark) */
+  --paper: #0b1330;
+  --grid: #162150;
+  --surface: #111b40;
+  --ink: #eef1ff;
+  --muted: #9aa6d1;
+  --blue: #5b7bff;
+  --tomato: #ff6a58;
+  --mint: #2fd39a;
+}
+
+[data-theme='light'] {
+  --paper: #fbfcff;
+  --grid: #e2e8f6;
+  --surface: #ffffff;
+  --ink: #0f1630;
+  --muted: #5a6485;
+  --blue: #1f4fff;
+  --tomato: #ff4a36;
+  --mint: #13b97f;
+}

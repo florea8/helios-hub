@@ -1,0 +1,221 @@
+/* Sign-in and sign-up: a poster board beside the form. */
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+/* Board */
+
+.auth-board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px 48px 0;
+  overflow: hidden;
+  border-right: var(--line);
+}
+
+.auth-board h1 {
+  max-width: 13ch;
+  margin: 6vh 0 0;
+  font: 900 clamp(2.25rem, 4.4vw, 4rem) / 0.98 var(--font-display);
+  font-stretch: 118%;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.auth-board h1 em {
+  padding: 0 0.12em;
+  font-style: normal;
+  color: #fff;
+  background: var(--tomato);
+}
+
+.auth-board p {
+  max-width: 44ch;
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.auth-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Four cut-out shapes; the yellow disc is the sun. */
+
+.auth-shapes {
+  position: relative;
+  flex: 1;
+  min-height: 190px;
+}
+
+.auth-shapes i {
+  position: absolute;
+  right: var(--x);
+  bottom: var(--y);
+  width: var(--s);
+  height: var(--s);
+  background: var(--c);
+  border: var(--line);
+  box-shadow: 6px 6px 0 var(--ink);
+  rotate: var(--r, 0deg);
+  animation:
+    land 0.6s var(--spring) calc(var(--i) * 0.09s) both,
+    bob calc(5s + var(--i) * 1s) ease-in-out calc(0.8s + var(--i) * 0.3s) infinite alternate;
+}
+
+@keyframes land {
+  from {
+    opacity: 0;
+    translate: 0 -60px;
+  }
+}
+
+@keyframes bob {
+  to {
+    translate: 0 -8px;
+  }
+}
+
+.auth-ticker {
+  margin: 0 -48px;
+  overflow: hidden;
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.auth-ticker div {
+  display: flex;
+  gap: 32px;
+  width: max-content;
+  padding: 9px 0;
+  animation: ticker 30s linear infinite;
+}
+
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Form */
+
+.auth-main {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 80px 24px 48px;
+}
+
+.auth-toggle {
+  position: absolute;
+  top: 28px;
+  right: 32px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 32px;
+  background: var(--surface);
+  border: var(--line);
+  box-shadow: 8px 8px 0 var(--blue);
+  animation: land 0.5s var(--spring) both;
+}
+
+.auth-card h2 {
+  margin: 8px 0 6px;
+  font: 900 1.875rem / 1.05 var(--font-display);
+  font-stretch: 115%;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.auth-card > p {
+  margin: 0 0 22px;
+  color: var(--muted);
+}
+
+.auth-card .notice {
+  margin-bottom: 18px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-card > .auth-footer {
+  margin: 22px 0 0;
+  font-size: 0.9375rem;
+}
+
+.auth-footer a,
+.auth-footer a:hover {
+  font-weight: 800;
+  color: var(--ink);
+  background: linear-gradient(var(--yellow), var(--yellow)) 0 100% / 100% 3px no-repeat;
+  transition: background-size 0.2s;
+}
+
+.auth-footer a:hover,
+.auth-footer a:focus-visible {
+  color: var(--on-color);
+  background-size: 100% 100%;
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth * {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .auth {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+
+  .auth-board {
+    gap: 16px;
+    padding: 20px 20px 0;
+    border-right: 0;
+    border-bottom: var(--line);
+  }
+
+  .auth-board h1 {
+    margin-top: 4px;
+    font-size: 1.75rem;
+  }
+
+  .auth-board p,
+  .auth-tags,
+  .auth-shapes {
+    display: none;
+  }
+
+  .auth-ticker {
+    margin: 0 -20px;
+  }
+
+  .auth-main {
+    place-items: start center;
+    padding: 64px 20px 40px;
+  }
+
+  .auth-toggle {
+    top: 18px;
+    right: 20px;
+  }
+}
