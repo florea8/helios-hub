@@ -345,15 +345,3 @@ exports.searchUsers = (req, res) => {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
-
-// Update last seen (called on any authenticated request)
-exports.updateLastSeen = (req, res, next) => {
-  if (req.user) {
-    try {
-      db.prepare('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?').run(req.user.id);
-    } catch (error) {
-      console.error('Error updating last_seen:', error);
-    }
-  }
-  next();
-};

@@ -116,18 +116,19 @@ const Profile = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('profile_picture', file);
-
     setLoading(true);
     try {
-      const response = await api.post('/api/profile/picture', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
       });
+      const response = await api.post('/api/auth/upload-profile-picture', { file: dataUrl });
       setProfilePicture(response.data.profile_picture);
       updateUser({ ...user, profile_picture: response.data.profile_picture });
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to update profile picture');
+      setError(err.response?.data?.message || 'Failed to update profile picture');
     } finally {
       setLoading(false);
     }

@@ -139,8 +139,4 @@ const startDeadlineChecker = (io) => {
   return interval;
 };
 
-module.exports = {
-  startDeadlineChecker,
-  checkTaskDeadlines,
-  setSocketInstance
-};
+module.exports = { startDeadlineChecker };

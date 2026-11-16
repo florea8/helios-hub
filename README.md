@@ -10,7 +10,7 @@ A collaborative platform for students — featuring real-time messaging, study r
 - Socket.IO — real-time events
 - JWT authentication
 - Multer — file uploads
-- Helmet, express-rate-limit — security
+- express-rate-limit — rate limiting
 
 **Frontend**
 - React 19 + Vite
@@ -28,7 +28,7 @@ A collaborative platform for students — featuring real-time messaging, study r
 - Friend requests
 - Task management with deadline tracking
 - Notification system
-- AI chatbot (OpenAI)
+- AI chatbot (Groq)
 - Light / dark theme
 
 ## Project Structure
@@ -39,7 +39,6 @@ helios/
 │   ├── config/       # Database connection
 │   ├── controllers/  # Route handlers
 │   ├── middleware/   # Auth, validation, rate limiting, error handling
-│   ├── models/       # SQLite models
 │   ├── routes/       # API routes
 │   ├── socket/       # Real-time event handlers
 │   ├── uploads/      # User-uploaded files (gitignored)
@@ -51,8 +50,7 @@ helios/
         ├── hooks/
         ├── pages/
         ├── services/
-        ├── styles/
-        └── utils/
+        └── styles/
 ```
 
 ## Getting Started
@@ -85,8 +83,8 @@ Key variables in `backend/.env`:
 | `PORT` | Server port (default `5000`) |
 | `DATABASE_URL` | SQLite file path |
 | `JWT_SECRET` | Secret key for JWT signing |
-| `OPENAI_API_KEY` | OpenAI API key for the chatbot |
-| `FRONTEND_URL` | CORS allowed origin (default `http://localhost:5173`) |
+| `GROQ_API_KEY` | Groq API key for the chatbot |
+| `CORS_ORIGINS` | Comma-separated CORS allowed origins (default `http://localhost:5173`) |
 
 ### Running in Development
 

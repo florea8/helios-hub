@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const friendsController = require('../controllers/friends');
-const { authenticateToken } = require('../middleware/mid');
+const { authenticate } = require('../middleware/mid');
 
 // All routes require authentication
-router.use(authenticateToken);
+router.use(authenticate);
 
 // Search users
 router.get('/search', friendsController.searchUsers);

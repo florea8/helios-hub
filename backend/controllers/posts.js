@@ -132,33 +132,6 @@ exports.getPostById = async (req, res) => {
   }
 };
 
-// UPDATE POST STATUS
-exports.updatePostStatus = async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-  const userId = req.user.id;
-
-  if (!['OPEN', 'IN_PROGRESS', 'CLOSED'].includes(status)) {
-    return res.status(400).json({ message: 'Invalid status' });
-  }
-
-  try {
-    const stmtCheck = db.prepare('SELECT * FROM posts WHERE id = ? AND user_id = ?');
-    const post = stmtCheck.get(id, userId);
-
-    if (!post) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-
-    const stmtUpdate = db.prepare('UPDATE posts SET status = ? WHERE id = ?');
-    stmtUpdate.run(status, id);
-
-    res.json({ message: 'Status updated' });
-  } catch (err) {
-    res.status(500).json({ message: 'DB error' });
-  }
-};
-
 // UPDATE POST
 exports.updatePost = async (req, res) => {
   const { id } = req.params;
@@ -289,7 +262,7 @@ exports.unlikePost = async (req, res) => {
 
     // Remove 1 point from post author (if not unliking own post)
     if (post && post.user_id !== userId) {
-      db.prepare('UPDATE users SET points = GREATEST(points - 1, 0) WHERE id = ?').run(post.user_id);
+      db.prepare('UPDATE users SET points = MAX(points - 1, 0) WHERE id = ?').run(post.user_id);
     }
 
     // Get updated like count
@@ -455,70 +428,12 @@ exports.deleteComment = async (req, res) => {
 
     // Remove 2 points from post author (if comment was not on own post)
     if (post && post.user_id !== userId) {
-      db.prepare('UPDATE users SET points = GREATEST(points - 2, 0) WHERE id = ?').run(post.user_id);
+      db.prepare('UPDATE users SET points = MAX(points - 2, 0) WHERE id = ?').run(post.user_id);
     }
 
     res.json({ message: 'Comment deleted' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'DB error' });
-  }
-};
-
-// RECALCULATE ALL POINTS
-// This function recalculates points for all users based on existing likes and comments
-exports.recalculateAllPoints = async (req, res) => {
-  try {
-    // Reset all points to 0
-    db.prepare('UPDATE users SET points = 0').run();
-
-    // Calculate points from likes
-    // +5 points for each like received (excluding self-likes)
-    const likesData = db.prepare(`
-      SELECT p.user_id, COUNT(*) as like_count
-      FROM post_likes pl
-      JOIN posts p ON pl.post_id = p.id
-      WHERE pl.user_id != p.user_id
-      GROUP BY p.user_id
-    `).all();
-
-    likesData.forEach(({ user_id, like_count }) => {
-      const points = like_count * 1;
-      db.prepare('UPDATE users SET points = points + ? WHERE id = ?').run(points, user_id);
-    });
-
-    // Calculate points from comments
-    // +10 points for each comment received (excluding self-comments)
-    const commentsData = db.prepare(`
-      SELECT p.user_id, COUNT(*) as comment_count
-      FROM post_comments pc
-      JOIN posts p ON pc.post_id = p.id
-      WHERE pc.user_id != p.user_id
-      GROUP BY p.user_id
-    `).all();
-
-    commentsData.forEach(({ user_id, comment_count }) => {
-      const points = comment_count * 2;
-      db.prepare('UPDATE users SET points = points + ? WHERE id = ?').run(points, user_id);
-    });
-
-    // Get summary statistics
-    const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
-    const usersWithPoints = db.prepare('SELECT COUNT(*) as count FROM users WHERE points > 0').get().count;
-    const totalPoints = db.prepare('SELECT SUM(points) as total FROM users').get().total || 0;
-    const topUser = db.prepare('SELECT username, points FROM users ORDER BY points DESC LIMIT 1').get();
-
-    res.json({ 
-      message: 'Points recalculated successfully',
-      statistics: {
-        total_users: totalUsers,
-        users_with_points: usersWithPoints,
-        total_points_distributed: totalPoints,
-        top_user: topUser
-      }
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'DB error during recalculation' });
   }
 };

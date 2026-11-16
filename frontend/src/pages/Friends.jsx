@@ -142,7 +142,7 @@ export default function Friends() {
 
   const handleRejectRequest = async (requestId) => {
     try {
-      await api.post(`/api/friends/reject/${requestId}`);
+      await api.delete(`/api/friends/reject/${requestId}`);
       fetchPendingRequests();
       decrementFriendRequests();
       setError('');
@@ -156,7 +156,7 @@ export default function Friends() {
     if (!confirm('Are you sure you want to remove this friend?')) return;
     
     try {
-      await api.delete(`/api/friends/remove/${friendId}`);
+      await api.delete(`/api/friends/${friendId}`);
       fetchFriends();
       setSelectedFriend(null);
       setError('');
