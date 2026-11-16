@@ -70,17 +70,6 @@ CREATE TABLE IF NOT EXISTS direct_messages (
   FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS ratings (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  post_id INTEGER NOT NULL,
-  rated_user_id INTEGER NOT NULL,
-  score INTEGER CHECK (score >= 1 AND score <= 5),
-  comment TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-  FOREIGN KEY (rated_user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
@@ -105,28 +94,6 @@ CREATE TABLE IF NOT EXISTS friends (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
   UNIQUE(user_id, friend_id)
-);
-
-CREATE TABLE IF NOT EXISTS work_experience (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  company TEXT NOT NULL,
-  position TEXT NOT NULL,
-  description TEXT,
-  start_date DATE,
-  end_date DATE,
-  is_current BOOLEAN DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS skills (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  skill_name TEXT NOT NULL,
-  proficiency TEXT DEFAULT 'INTERMEDIATE' CHECK (proficiency IN ('BEGINNER','INTERMEDIATE','ADVANCED','EXPERT')),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS post_likes (
@@ -386,63 +353,6 @@ try {
   // Column already exists
 }
 
-// Create projects table
-db.exec(`
-CREATE TABLE IF NOT EXISTS projects (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  title TEXT NOT NULL,
-  description TEXT,
-  url TEXT,
-  image_url TEXT,
-  technologies TEXT,
-  start_date TEXT,
-  end_date TEXT,
-  is_current INTEGER DEFAULT 0,
-  display_order INTEGER DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-`);
-
-// Create achievements/badges table
-db.exec(`
-CREATE TABLE IF NOT EXISTS achievements (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE,
-  description TEXT,
-  icon TEXT,
-  category TEXT,
-  points INTEGER DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-`);
-
-// Create user_achievements table
-db.exec(`
-CREATE TABLE IF NOT EXISTS user_achievements (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  achievement_id INTEGER NOT NULL,
-  earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE,
-  UNIQUE(user_id, achievement_id)
-);
-`);
-
-// Create activity feed table
-db.exec(`
-CREATE TABLE IF NOT EXISTS activities (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  activity_type TEXT NOT NULL,
-  activity_data TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-`);
-
 // Add points column to users table
 try {
   db.prepare('ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0').run();
@@ -453,34 +363,11 @@ try {
   }
 }
 
-// Insert default achievements
-const defaultAchievements = [
-  { name: 'First Post', description: 'Created your first post', icon: '📝', category: 'posts', points: 10 },
-  { name: 'Team Player', description: 'Joined your first room', icon: '🤝', category: 'rooms', points: 10 },
-  { name: 'Task Master', description: 'Completed 10 tasks', icon: '✅', category: 'tasks', points: 50 },
-  { name: 'Social Butterfly', description: 'Made 5 friends', icon: '🦋', category: 'social', points: 25 },
-  { name: 'Early Bird', description: 'Member for 30 days', icon: '🌅', category: 'tenure', points: 30 },
-  { name: 'Collaborator', description: 'Contributed to 5 different rooms', icon: '🔧', category: 'collaboration', points: 40 },
-  { name: 'Helpful', description: 'Received 10 likes on comments', icon: '❤️', category: 'engagement', points: 20 },
-  { name: 'Popular', description: 'Got 100 profile views', icon: '⭐', category: 'visibility', points: 50 }
-];
-
-try {
-  const insertAchievement = db.prepare('INSERT OR IGNORE INTO achievements (name, description, icon, category, points) VALUES (?, ?, ?, ?, ?)');
-  for (const achievement of defaultAchievements) {
-    insertAchievement.run(achievement.name, achievement.description, achievement.icon, achievement.category, achievement.points);
-  }
-  console.log('Default achievements inserted');
-} catch (error) {
-  console.error('Error inserting achievements:', error.message);
-}
-
 const authRoutes = require('./routes/auth_routes');
 const postsRoutes = require('./routes/posts_routes');
 const roomsRoutes = require('./routes/rooms_routes');
 const messagesRoutes = require('./routes/messages_routes');
 const tasksRoutes = require('./routes/tasks_routes');
-const ratingsRoutes = require('./routes/ratings_routes');
 const tagsRoutes = require('./routes/tags_routes');
 const friendsRoutes = require('./routes/friends_routes');
 const directMessagesRoutes = require('./routes/direct_messages_routes');
@@ -533,7 +420,6 @@ app.use('/api/posts', postsRoutes);
 app.use('/api/rooms', roomsRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/tasks', tasksRoutes);
-app.use('/api/ratings', ratingsRoutes);
 app.use('/api/tags', tagsRoutes);
 app.use('/api/friends', friendsRoutes);
 app.use('/api/direct-messages', directMessagesRoutes);

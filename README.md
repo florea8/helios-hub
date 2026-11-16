@@ -22,7 +22,7 @@ A collaborative platform for students — featuring real-time messaging, study r
 
 - Authentication (register, login, JWT)
 - User profiles with avatar upload
-- Posts with tags and ratings
+- Posts with tags and likes
 - Study rooms with real-time chat and file sharing
 - Direct messages
 - Friend requests
