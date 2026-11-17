@@ -29,26 +29,6 @@ exports.createPost = async (req, res) => {
   }
 
   try {
-    // Check if posts table has post_type and image columns
-    const tableInfo = db.prepare("PRAGMA table_info(posts)").all();
-    const hasPostType = tableInfo.some(col => col.name === 'post_type');
-    const hasImage = tableInfo.some(col => col.name === 'image');
-
-    // Add columns if they don't exist
-    if (!hasPostType) {
-      db.prepare("ALTER TABLE posts ADD COLUMN post_type TEXT DEFAULT 'standard'").run();
-    }
-    if (!hasImage) {
-      db.prepare("ALTER TABLE posts ADD COLUMN image TEXT").run();
-    }
-
-    // Check if users table has points column
-    const usersTableInfo = db.prepare("PRAGMA table_info(users)").all();
-    const hasPoints = usersTableInfo.some(col => col.name === 'points');
-    if (!hasPoints) {
-      db.prepare("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0").run();
-    }
-
     // The post and its tags are saved together or not at all. Unknown tag ids are skipped.
     const postId = db.transaction(() => {
       const { lastInsertRowid } = db

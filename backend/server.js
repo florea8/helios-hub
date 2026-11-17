@@ -226,6 +226,16 @@ try {
   // Column already exists
 }
 
+// Migration: posts carry a type and an optional image. These were once added on the first post,
+// so a new database had neither column until someone posted.
+for (const column of ["post_type TEXT DEFAULT 'standard'", 'image TEXT']) {
+  try {
+    db.prepare(`ALTER TABLE posts ADD COLUMN ${column}`).run();
+  } catch (error) {
+    // Column already exists
+  }
+}
+
 // Repair: rooms made before post_type passed validation left their post marked 'standard'.
 try {
   db.prepare("UPDATE posts SET post_type = 'room' WHERE id IN (SELECT post_id FROM rooms) AND COALESCE(post_type, 'standard') != 'room'").run();
