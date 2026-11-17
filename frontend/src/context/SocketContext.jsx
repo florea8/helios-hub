@@ -19,6 +19,8 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [connected, setConnected] = useState(false);
+  // When people went offline while this page was open; fresher than the last_seen the page loaded with.
+  const [wentOffline, setWentOffline] = useState({});
 
   useEffect(() => {
     if (!user?.token) {
@@ -58,6 +60,7 @@ export const SocketProvider = ({ children }) => {
 
     newSocket.on('user_offline', ({ userId }) => {
       setOnlineUsers(prev => prev.filter(id => id !== userId));
+      setWentOffline(prev => ({ ...prev, [userId]: new Date().toISOString() }));
     });
 
     newSocket.on('error', (error) => {
@@ -100,6 +103,8 @@ export const SocketProvider = ({ children }) => {
     return onlineUsers.includes(userId);
   };
 
+  const lastSeenOf = (userId, loaded) => wentOffline[userId] || loaded;
+
   const value = {
     socket,
     connected,
@@ -108,7 +113,8 @@ export const SocketProvider = ({ children }) => {
     startTyping,
     stopTyping,
     getSocket,
-    isUserOnline
+    isUserOnline,
+    lastSeenOf
   };
 
   return (

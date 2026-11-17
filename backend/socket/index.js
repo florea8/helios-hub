@@ -7,6 +7,7 @@ const { startDeadlineChecker } = require('../utils/deadlineChecker');
 const JWT_SECRET = process.env.JWT_SECRET || 'unsecretfoarteputernic123!';
 
 // Map pentru tracking users online: userId -> socketId
+// userId -> ids of that user's open sockets. Someone with two tabs stays online until both close.
 const onlineUsers = new Map();
 let ioInstance = null;
 
@@ -41,8 +42,10 @@ function initializeSocket(server) {
     const userId = socket.userId;
     console.log(`User ${userId} connected via Socket.io`);
 
-    // Add user to online users map
-    onlineUsers.set(userId, socket.id);
+    const sockets = onlineUsers.get(userId) || new Set();
+    const cameOnline = sockets.size === 0;
+    sockets.add(socket.id);
+    onlineUsers.set(userId, sockets);
 
     // Join a personal room for notifications
     socket.join(`user-${userId}`);
@@ -54,15 +57,15 @@ function initializeSocket(server) {
       console.error('Error updating last_seen on connect:', error);
     }
 
-    // Notify friends that user is online
-    socket.broadcast.emit('user_online', { userId });
+    if (cameOnline) socket.broadcast.emit('user_online', { userId });
 
     // Send current online users to the newly connected user
     socket.emit('online_users', Array.from(onlineUsers.keys()));
 
     // Handle sending direct messages
     socket.on('send_message', async (data) => {
-      const { recipientId, content } = data;
+      const recipientId = Number(data.recipientId);
+      const { content } = data;
       
       try {
         // Verify friendship
@@ -84,24 +87,18 @@ function initializeSocket(server) {
         `);
         const result = stmt.run(userId, recipientId, content);
 
+        const sender = db.prepare('SELECT username FROM users WHERE id = ?').get(userId);
         const message = {
           id: result.lastInsertRowid,
           sender_id: userId,
+          sender_username: sender.username,
           receiver_id: recipientId,
           content,
           created_at: new Date().toISOString()
         };
 
-        // Get sender info
-        const senderStmt = db.prepare('SELECT username FROM users WHERE id = ?');
-        const sender = senderStmt.get(userId);
-
-        // Create notification for recipient
-        // Send to recipient if online
-        const recipientSocketId = onlineUsers.get(recipientId);
-        if (recipientSocketId) {
-          io.to(recipientSocketId).emit('receive_message', message);
-        }
+        // Every tab the recipient has open gets it; the message waits in the database otherwise.
+        io.to(`user-${recipientId}`).emit('receive_message', message);
 
         // Confirm to sender
         socket.emit('message_sent', message);
@@ -114,21 +111,11 @@ function initializeSocket(server) {
 
     // Handle typing indicator
     socket.on('typing', (data) => {
-      const { recipientId } = data;
-      const recipientSocketId = onlineUsers.get(recipientId);
-      
-      if (recipientSocketId) {
-        io.to(recipientSocketId).emit('user_typing', { userId });
-      }
+      io.to(`user-${Number(data.recipientId)}`).emit('user_typing', { userId });
     });
 
     socket.on('stop_typing', (data) => {
-      const { recipientId } = data;
-      const recipientSocketId = onlineUsers.get(recipientId);
-      
-      if (recipientSocketId) {
-        io.to(recipientSocketId).emit('user_stop_typing', { userId });
-      }
+      io.to(`user-${Number(data.recipientId)}`).emit('user_stop_typing', { userId });
     });
 
     // Room events
@@ -237,16 +224,8 @@ function initializeSocket(server) {
     });
 
     socket.on('voice-signal', (data) => {
-      const { roomId, targetUserId, signal } = data;
-      
-      // Forward the signal to the target user
-      const targetSocketId = onlineUsers.get(targetUserId);
-      if (targetSocketId) {
-        io.to(targetSocketId).emit('voice-signal', {
-          fromUserId: userId,
-          signal
-        });
-      }
+      const { targetUserId, signal } = data;
+      io.to(`user-${Number(targetUserId)}`).emit('voice-signal', { fromUserId: userId, signal });
     });
 
     socket.on('voice-mute-toggle', (data) => {
@@ -263,17 +242,16 @@ function initializeSocket(server) {
     socket.on('disconnect', () => {
       console.log(`User ${userId} disconnected`);
       
-      // Remove from online users
-      onlineUsers.delete(userId);
+      const remaining = onlineUsers.get(userId);
+      remaining?.delete(socket.id);
+      if (remaining?.size) return; // another tab is still open
 
-      // Update last_seen in database
+      onlineUsers.delete(userId);
       try {
         db.prepare("UPDATE users SET last_seen = datetime('now') WHERE id = ?").run(userId);
       } catch (error) {
         console.error('Error updating last_seen on disconnect:', error);
       }
-
-      // Notify friends that user is offline
       socket.broadcast.emit('user_offline', { userId });
     });
   });
@@ -293,7 +271,6 @@ function initializeSocket(server) {
   return io;
 }
 
-// Export getters for io and onlineUsers
 function getIO() {
   if (!ioInstance) {
     throw new Error('Socket.io not initialized');
@@ -301,10 +278,5 @@ function getIO() {
   return ioInstance;
 }
 
-function getOnlineUsers() {
-  return onlineUsers;
-}
-
 module.exports = initializeSocket;
 module.exports.getIO = getIO;
-module.exports.getOnlineUsers = getOnlineUsers;

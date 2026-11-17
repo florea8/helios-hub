@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api, { errorMessage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
@@ -33,8 +33,11 @@ export default function Friends() {
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState('');
   const { user } = useAuth();
-  const { getSocket, isUserOnline, sendMessage } = useSocket();
-  const { unreadMessages, pendingFriendRequests, markMessagesAsRead, decrementFriendRequests } = useNotifications();
+  const { getSocket, isUserOnline, lastSeenOf, sendMessage } = useSocket();
+  const { unreadMessages, pendingFriendRequests, markMessagesAsRead, setActiveChat, decrementFriendRequests } =
+    useNotifications();
+  const [params, setParams] = useSearchParams();
+  const withId = Number(params.get('with')) || null;
   const search = useDebounce(query.trim(), 300);
   const fail = useCallback((fallback) => (err) => setError(errorMessage(err, fallback)), []);
 
@@ -87,6 +90,21 @@ export default function Friends() {
     socket.on('receive_message', onMessage);
     return () => socket.off('receive_message', onMessage);
   }, [getSocket, chatFriend, markMessagesAsRead]);
+
+  useEffect(() => {
+    setActiveChat(chatFriend?.id ?? null);
+    return () => setActiveChat(null);
+  }, [chatFriend, setActiveChat]);
+
+  // Arriving from a message alert opens that conversation once the list is in.
+  const fromAlert = withId && friends?.find((friend) => friend.id === withId);
+  useEffect(() => {
+    if (!fromAlert) return;
+    setParams({}, { replace: true });
+    openChat(fromAlert);
+    // openChat changes every render; the alert only needs handling once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromAlert]);
 
   const openChat = async (friend) => {
     setChatFriend(friend);
@@ -174,7 +192,7 @@ export default function Friends() {
                   <UserListItem
                     key={friend.id}
                     user={friend}
-                    subtitle={isUserOnline(friend.id) ? 'online' : lastSeen(friend.last_seen)}
+                    subtitle={isUserOnline(friend.id) ? 'online' : lastSeen(lastSeenOf(friend.id, friend.last_seen))}
                     isOnline={isUserOnline(friend.id)}
                     isActive={chatFriend?.id === friend.id}
                     onClick={() => openChat(friend)}
@@ -272,7 +290,7 @@ export default function Friends() {
                       <UserListItem
                         key={person.id}
                         user={person}
-                        subtitle={isUserOnline(person.id) ? 'online' : lastSeen(person.last_seen)}
+                        subtitle={isUserOnline(person.id) ? 'online' : lastSeen(lastSeenOf(person.id, person.last_seen))}
                         actions={
                           <button
                             type="button"

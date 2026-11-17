@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSocket } from './SocketContext';
 import { useAuth } from './AuthContext';
 import api from '../services/api';
@@ -12,6 +12,11 @@ export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [persistentNotifications, setPersistentNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  // The friend whose conversation is on screen; their messages need no alert.
+  const activeChat = useRef(null);
+  const setActiveChat = useCallback((friendId) => {
+    activeChat.current = friendId;
+  }, []);
 
   // Fetch persistent notifications from backend
   const fetchNotifications = useCallback(async () => {
@@ -34,17 +39,19 @@ export const NotificationProvider = ({ children }) => {
 
     const fetchUnreadCounts = async () => {
       try {
-        // Fetch pending friend requests count
-        const requestsRes = await api.get('/api/friends/requests/pending');
+        const [requestsRes, unreadRes] = await Promise.all([
+          api.get('/api/friends/requests/pending'),
+          api.get('/api/direct-messages/unread'),
+        ]);
         setPendingFriendRequests(requestsRes.data.length);
+        setUnreadMessages(unreadRes.data);
         
         // Fetch notifications
         const res = await api.get('/api/notifications?limit=50');
         setPersistentNotifications(res.data);
         
-        // Update unread count
-        const unreadRes = await api.get('/api/notifications/unread-count');
-        setUnreadCount(unreadRes.data.count);
+        const countRes = await api.get('/api/notifications/unread-count');
+        setUnreadCount(countRes.data.count);
       } catch (err) {
         console.error('Failed to fetch notification counts:', err);
       }
@@ -91,13 +98,18 @@ export const NotificationProvider = ({ children }) => {
       });
     };
 
-    // Listen for new messages (for unread count only)
     const handleNewMessage = (message) => {
-      // Increment unread count for this sender
+      if (message.sender_id === activeChat.current) return;
       setUnreadMessages(prev => ({
         ...prev,
         [message.sender_id]: (prev[message.sender_id] || 0) + 1
       }));
+      addNotification({
+        id: `dm-${message.id}`,
+        title: `Message from ${message.sender_username || 'a friend'}`,
+        message: message.content.length > 90 ? `${message.content.slice(0, 90)}…` : message.content,
+        link: `/friends?with=${message.sender_id}`
+      });
     };
 
     socket.on('new_notification', handleNewNotification);
@@ -109,16 +121,14 @@ export const NotificationProvider = ({ children }) => {
     };
   }, [getSocket, connected, addNotification, fetchNotifications]);
 
-  const markMessagesAsRead = useCallback((userId) => {
+  const markMessagesAsRead = useCallback((friendId) => {
     setUnreadMessages(prev => {
       const newUnread = { ...prev };
-      delete newUnread[userId];
+      delete newUnread[friendId];
       return newUnread;
     });
-    
-    // Also refresh notifications to update count
-    fetchNotifications();
-  }, [fetchNotifications]);
+    api.post(`/api/direct-messages/${friendId}/read`).catch((err) => console.error('Failed to mark messages as read:', err));
+  }, []);
 
   // Mark notification as read
   const markNotificationAsRead = useCallback(async (notificationId) => {
@@ -174,6 +184,7 @@ export const NotificationProvider = ({ children }) => {
     persistentNotifications,
     unreadCount,
     markMessagesAsRead,
+    setActiveChat,
     decrementFriendRequests,
     getTotalUnreadMessages,
     removeNotification,

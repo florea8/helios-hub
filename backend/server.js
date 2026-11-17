@@ -226,6 +226,13 @@ try {
   // Column already exists
 }
 
+// Migration: direct messages remember when they were read, so unread counts survive a reload
+try {
+  db.prepare('ALTER TABLE direct_messages ADD COLUMN read_at DATETIME').run();
+} catch (error) {
+  // Column already exists
+}
+
 // Migration: Update notifications table to support POST_LIKE type
 try {
   const tableInfo = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='notifications'").get();

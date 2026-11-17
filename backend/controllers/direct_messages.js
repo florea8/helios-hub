@@ -46,6 +46,36 @@ exports.sendDirectMessage = (req, res) => {
   }
 };
 
+// GET /api/direct-messages/unread: how many unread messages each friend has sent you
+exports.getUnreadCounts = (req, res) => {
+  try {
+    const rows = db
+      .prepare(
+        `SELECT sender_id, COUNT(*) AS count FROM direct_messages
+         WHERE receiver_id = ? AND read_at IS NULL
+         GROUP BY sender_id`
+      )
+      .all(req.user.id);
+    res.json(Object.fromEntries(rows.map((row) => [row.sender_id, row.count])));
+  } catch (error) {
+    console.error('getUnreadCounts error:', error);
+    res.status(500).json({ error: 'DB error' });
+  }
+};
+
+// POST /api/direct-messages/:friendId/read: marks everything that friend sent you as read
+exports.markRead = (req, res) => {
+  try {
+    db.prepare(
+      "UPDATE direct_messages SET read_at = datetime('now') WHERE sender_id = ? AND receiver_id = ? AND read_at IS NULL"
+    ).run(Number(req.params.friendId), req.user.id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('markRead error:', error);
+    res.status(500).json({ error: 'DB error' });
+  }
+};
+
 // GET /api/direct-messages/:friendId
 exports.getConversation = (req, res) => {
   const friendId = Number(req.params.friendId);

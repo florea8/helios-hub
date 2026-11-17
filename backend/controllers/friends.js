@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { getIO, getOnlineUsers } = require('../socket');
+const { getIO } = require('../socket');
 const notificationsController = require('./notifications');
 
 // Send friend request

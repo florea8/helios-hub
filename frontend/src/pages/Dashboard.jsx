@@ -61,8 +61,8 @@ const Dashboard = () => {
   const [friends, setFriends] = useState([]);
   const [chatFriend, setChatFriend] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
-  const { getSocket, isUserOnline, sendMessage } = useSocket();
-  const { markMessagesAsRead } = useNotifications();
+  const { getSocket, isUserOnline, lastSeenOf, sendMessage } = useSocket();
+  const { markMessagesAsRead, setActiveChat } = useNotifications();
   const query = useDebounce(search, 300).trim();
   // The feed shown belongs to one filter; while the next one loads, show the skeleton.
   const filters = { view, tagId, query };
@@ -105,10 +105,16 @@ const Dashboard = () => {
     const onMessage = (message) => {
       if (message.sender_id !== chatFriend.id && message.receiver_id !== chatFriend.id) return;
       setChatMessages((prev) => [...prev, { ...message, isOwn: message.sender_id === user?.id }]);
+      markMessagesAsRead(chatFriend.id);
     };
     socket.on('receive_message', onMessage);
     return () => socket.off('receive_message', onMessage);
-  }, [getSocket, chatFriend, user]);
+  }, [getSocket, chatFriend, user, markMessagesAsRead]);
+
+  useEffect(() => {
+    setActiveChat(chatFriend?.id ?? null);
+    return () => setActiveChat(null);
+  }, [chatFriend, setActiveChat]);
 
   const loadMore = async () => {
     setLoadingMore(true);
@@ -336,7 +342,7 @@ const Dashboard = () => {
               <UserListItem
                 key={friend.id}
                 user={friend}
-                subtitle={isUserOnline(friend.id) ? 'online' : lastSeen(friend.last_seen)}
+                subtitle={isUserOnline(friend.id) ? 'online' : lastSeen(lastSeenOf(friend.id, friend.last_seen))}
                 isOnline={isUserOnline(friend.id)}
                 isActive={chatFriend?.id === friend.id}
                 onClick={() => openChat(friend)}
