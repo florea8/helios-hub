@@ -370,68 +370,39 @@ exports.addComment = async (req, res) => {
       WHERE c.id = ?
     `).get(result.lastInsertRowid);
 
-    // Get commenter info
-    const commenterStmt = db.prepare('SELECT username FROM users WHERE id = ?');
-    const commenter = commenterStmt.get(userId);
-
-    // Notify post author (if not commenting on own post)
-    if (post.user_id !== userId) {
+    // The comment row already carries the commenter's name.
+    const name = comment.username;
+    const about = post.title ? `"${post.title}"` : 'a post';
+    const link = `/posts/${id}`;
+    const notify = (recipientId, message) => {
       const notifId = notificationsController.createNotification(
-        post.user_id,
-        'COMMENT_REPLY',
-        'New Comment',
-        `${commenter?.username || 'Someone'} commented on your post`,
-        `/posts/${id}`,
-        userId,
-        result.lastInsertRowid
+        recipientId, 'COMMENT_REPLY', 'New reply', message, link, userId, result.lastInsertRowid
       );
-
-      // Send real-time notification
       if (ioInstance && notifId) {
-        ioInstance.to(`user-${post.user_id}`).emit('new_notification', {
+        ioInstance.to(`user-${recipientId}`).emit('new_notification', {
           id: notifId,
           type: 'COMMENT_REPLY',
-          title: 'New Comment',
-          message: `${commenter?.username || 'Someone'} commented on your post`,
-          link: `/posts/${id}`,
-          related_username: commenter?.username,
+          title: 'New reply',
+          message,
+          link,
+          related_username: name,
           created_at: new Date().toISOString()
         });
       }
+    };
+
+    // The post's author, unless they replied to themselves
+    if (post.user_id !== userId) {
+      notify(post.user_id, `${name} replied to your post ${about}`);
     }
 
-    // Also notify other commenters (excluding current user and post author)
-    const otherCommentersStmt = db.prepare(`
-      SELECT DISTINCT user_id 
-      FROM post_comments 
+    // Everyone else who has replied to this post
+    const others = db.prepare(`
+      SELECT DISTINCT user_id
+      FROM post_comments
       WHERE post_id = ? AND user_id != ? AND user_id != ?
-    `);
-    const otherCommenters = otherCommentersStmt.all(id, userId, post.user_id);
-
-    otherCommenters.forEach(commenter => {
-      const notifId = notificationsController.createNotification(
-        commenter.user_id,
-        'COMMENT_REPLY',
-        'New Reply',
-        `${commenter?.username || 'Someone'} also commented on a post you commented on`,
-        `/posts/${id}`,
-        userId,
-        result.lastInsertRowid
-      );
-
-      // Send real-time notification
-      if (ioInstance && notifId) {
-        ioInstance.to(`user-${commenter.user_id}`).emit('new_notification', {
-          id: notifId,
-          type: 'COMMENT_REPLY',
-          title: 'New Reply',
-          message: `${commenter?.username || 'Someone'} also commented on a post you commented on`,
-          link: `/posts/${id}`,
-          related_username: commenter?.username,
-          created_at: new Date().toISOString()
-        });
-      }
-    });
+    `).all(id, userId, post.user_id);
+    others.forEach((other) => notify(other.user_id, `${name} also replied to ${about}`));
 
     res.status(201).json(comment);
   } catch (err) {
