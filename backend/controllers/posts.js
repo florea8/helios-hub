@@ -74,6 +74,7 @@ exports.getPosts = async (req, res) => {
   const tag = parseInt(req.query.tag) || null;
   const search = String(req.query.q || '').trim();
   const mine = req.query.feed === 'mine';
+  const kind = ['standard', 'room'].includes(req.query.type) ? req.query.type : null;
 
   const limitNum = parseInt(limit);
   const offsetNum = parseInt(offset);
@@ -88,6 +89,10 @@ exports.getPosts = async (req, res) => {
   if (tag) {
     conditions.push('p.id IN (SELECT post_id FROM post_tags WHERE tag_id = ?)');
     filter.push(tag);
+  }
+  if (kind) {
+    conditions.push("COALESCE(p.post_type, 'standard') = ?");
+    filter.push(kind);
   }
   if (mine) {
     conditions.push(

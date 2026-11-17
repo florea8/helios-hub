@@ -226,6 +226,13 @@ try {
   // Column already exists
 }
 
+// Repair: rooms made before post_type passed validation left their post marked 'standard'.
+try {
+  db.prepare("UPDATE posts SET post_type = 'room' WHERE id IN (SELECT post_id FROM rooms) AND COALESCE(post_type, 'standard') != 'room'").run();
+} catch (error) {
+  console.error('Error marking room posts:', error.message);
+}
+
 // Migration: direct messages remember when they were read, so unread counts survive a reload
 try {
   db.prepare('ALTER TABLE direct_messages ADD COLUMN read_at DATETIME').run();

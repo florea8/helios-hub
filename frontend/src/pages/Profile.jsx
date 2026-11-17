@@ -35,7 +35,7 @@ const readFile = (file) =>
     reader.readAsDataURL(file);
   });
 
-const Profile = () => {
+const ProfilePage = () => {
   const { userId } = useParams();
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
@@ -64,7 +64,8 @@ const Profile = () => {
         if (err.response?.status === 403) return null;
         throw err;
       }),
-      api.get(`/api/posts?author=${id}&limit=50`),
+      // Rooms have their own tab, so the posts they create are left out here.
+      api.get(`/api/posts?author=${id}&type=standard&limit=50`),
       api.get(`/api/rooms?member=${id}`),
     ])
       .then(([details, authored, joined]) => {
@@ -355,6 +356,12 @@ const Profile = () => {
       </Dialog>
     </Layout>
   );
+};
+
+// A fresh page for each person, so nothing from the previous profile shows while the next loads.
+const Profile = () => {
+  const { userId } = useParams();
+  return <ProfilePage key={userId || 'me'} />;
 };
 
 export default Profile;
