@@ -559,8 +559,23 @@
 @media (max-width: 760px) {
   .topbar .wrap {
     flex-wrap: wrap;
+    gap: 10px;
     height: auto;
     padding-block: 10px;
+  }
+
+  .topbar .logo-mark {
+    margin-right: auto;
+  }
+
+  .topbar .button {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 0.875rem;
+  }
+
+  .topbar .logo-mark {
+    font-size: 1.0625rem;
   }
 
   .topbar-nav {

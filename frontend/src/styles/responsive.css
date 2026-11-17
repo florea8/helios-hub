@@ -1,34 +1,19 @@
+/* Phone rules for the pages not yet on the new system (.paper).
+   Remove this file once the profile pages are migrated. */
 
-
-/* Touch-friendly buttons on mobile */
 @media (max-width: 767px) {
-  button,
-.btn,
-a.btn {
+  body:not(:has(.paper)) :is(button, .btn, a.btn) {
     min-height: 44px;
     min-width: 44px;
     padding: 0.75rem 1.25rem;
   }
-  
-  input,
-textarea,
-select {
-    min-height: 44px;
-    font-size: 16px; /* Prevents zoom on iOS */
-  }
-}
 
-/* Responsive text sizes */
-@media (max-width: 767px) {
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.5rem; }
-  h3 { font-size: 1.25rem; }
-  h4 { font-size: 1.125rem; }
-}
+  body:not(:has(.paper)) h1 { font-size: 2rem; }
+  body:not(:has(.paper)) h2 { font-size: 1.5rem; }
+  body:not(:has(.paper)) h3 { font-size: 1.25rem; }
+  body:not(:has(.paper)) h4 { font-size: 1.125rem; }
 
-/* Mobile navigation */
-@media (max-width: 768px) {
-  .main-nav {
+  body:not(:has(.paper)) .main-nav {
     flex-direction: column;
     position: fixed;
     top: 60px;
@@ -42,75 +27,62 @@ select {
     transition: transform 0.3s ease;
     z-index: 100;
   }
-  
-  .nav-item {
+
+  body:not(:has(.paper)) .nav-item {
     width: 100%;
     text-align: center;
     padding: 0.75rem 1rem;
   }
-}
 
-/* Responsive grids - Modern Spacing */
-.rooms-list,
-.dashboard-layout {
-  display: grid;
-  gap: 2rem;
-}
-
-@media (max-width: 767px) {
-  .rooms-list {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  
-  .dashboard-layout {
+  body:not(:has(.paper)) .dashboard-layout {
     grid-template-columns: 1fr !important;
     gap: 2rem;
   }
-  
-  .sidebar-left {
+
+  body:not(:has(.paper)) .sidebar-left {
     display: none;
   }
-  
-  .dashboard-wrapper {
+
+  body:not(:has(.paper)) .dashboard-wrapper {
     padding: 3rem 1.5rem;
   }
 }
 
+body:not(:has(.paper)) .dashboard-layout {
+  display: grid;
+  gap: 2rem;
+}
+
 @media (min-width: 768px) and (max-width: 1023px) {
-  
-  .dashboard-layout {
+  body:not(:has(.paper)) .dashboard-layout {
     grid-template-columns: 1fr 2fr;
     gap: 2.5rem;
   }
-  
-  .dashboard-wrapper {
+
+  body:not(:has(.paper)) .dashboard-wrapper {
     padding: 4rem 2.5rem;
   }
 }
 
 @media (min-width: 1024px) {
-  
-  .dashboard-layout {
+  body:not(:has(.paper)) .dashboard-layout {
     grid-template-columns: 300px 1fr 340px;
     gap: 3rem;
   }
 }
 
-/* Responsive images */
+/* These two hold for every page. */
+
 img {
   max-width: 100%;
   height: auto;
 }
 
-/* Overflow handling */
 @media (max-width: 767px) {
-  body {
-    overflow-x: hidden;
-  }
-  
-  table {
-    display: block;
-    overflow-x: auto;
+  /* 16px stops iOS zooming into a field on focus. */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
   }
 }

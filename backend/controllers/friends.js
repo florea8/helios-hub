@@ -202,7 +202,6 @@ exports.getFriendsList = (req, res) => {
       SELECT 
         f.friend_id as id,
         u.username,
-        u.email,
         u.profile_picture,
         u.last_seen,
         f.created_at as friends_since
@@ -216,7 +215,6 @@ exports.getFriendsList = (req, res) => {
       SELECT 
         f.user_id as id,
         u.username,
-        u.email,
         u.profile_picture,
         u.last_seen,
         f.created_at as friends_since
@@ -250,7 +248,6 @@ exports.getPendingRequests = (req, res) => {
         f.id as request_id,
         u.id as user_id,
         u.username,
-        u.email,
         u.profile_picture,
         f.created_at
       FROM friends f
@@ -276,7 +273,6 @@ exports.getSentRequests = (req, res) => {
         f.id as request_id,
         u.id as user_id,
         u.username,
-        u.email,
         u.profile_picture,
         f.created_at
       FROM friends f
@@ -304,39 +300,34 @@ exports.searchUsers = (req, res) => {
   try {
     console.log(`Searching for users: '${query}' by user ${userId}`);
     
-    // Get all users matching the search query
+    // Matching on username only: matching on email would let anyone test whether an address has an account.
     const users = db.prepare(`
-      SELECT id, username, email, profile_picture, last_seen
+      SELECT id, username, profile_picture, last_seen
       FROM users
-      WHERE id != ? 
-      AND (username LIKE ? OR email LIKE ?)
+      WHERE id != ? AND username LIKE ?
       ORDER BY username
       LIMIT 20
-    `).all(userId, `%${query}%`, `%${query}%`);
+    `).all(userId, `%${query}%`);
 
     console.log(`Found ${users.length} users`);
 
-    // For each user, determine friendship status
-    const usersWithStatus = users.map(user => {
-      // Check if there's any friendship connection
-      const friendship = db.prepare(`
-        SELECT status, user_id, friend_id FROM friends
-        WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
-      `).get(userId, user.id, user.id, userId);
+    // One query for every result's friendship, instead of one per result.
+    const ids = users.map((user) => user.id);
+    const marks = ids.map(() => '?').join(',');
+    const links = ids.length
+      ? db.prepare(`
+          SELECT status, user_id, friend_id FROM friends
+          WHERE (user_id = ? AND friend_id IN (${marks})) OR (friend_id = ? AND user_id IN (${marks}))
+        `).all(userId, ...ids, userId, ...ids)
+      : [];
+    const linkWith = new Map(links.map((link) => [link.user_id === userId ? link.friend_id : link.user_id, link]));
 
+    const usersWithStatus = users.map((user) => {
+      const link = linkWith.get(user.id);
       let friendship_status = 'none';
-      if (friendship) {
-        if (friendship.status === 'ACCEPTED') {
-          friendship_status = 'friend';
-        } else if (friendship.status === 'PENDING') {
-          friendship_status = friendship.user_id === userId ? 'request_sent' : 'request_received';
-        }
-      }
-
-      return {
-        ...user,
-        friendship_status
-      };
+      if (link?.status === 'ACCEPTED') friendship_status = 'friend';
+      else if (link?.status === 'PENDING') friendship_status = link.user_id === userId ? 'request_sent' : 'request_received';
+      return { ...user, friendship_status };
     });
 
     res.json(usersWithStatus);
