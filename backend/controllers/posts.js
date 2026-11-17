@@ -319,8 +319,8 @@ exports.getComments = async (req, res) => {
         u.profile_picture 
       FROM post_comments c 
       JOIN users u ON c.user_id = u.id 
-      WHERE c.post_id = ? 
-      ORDER BY c.created_at DESC
+      WHERE c.post_id = ?
+      ORDER BY c.created_at ASC, c.id ASC
     `);
     const rows = stmt.all(id);
 

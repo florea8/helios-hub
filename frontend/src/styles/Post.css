@@ -67,7 +67,85 @@
   background: var(--yellow);
 }
 
+.post-like[aria-expanded='true'] {
+  color: #fff;
+  background: var(--blue);
+}
+
 .post-like b {
   display: inline-block;
   animation: pop 0.35s var(--spring);
+}
+
+/* Replies open under the post, set off by a rule on the left. */
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: stretch;
+  margin-top: 6px;
+  padding-left: 16px;
+  border-left: 3px solid var(--yellow);
+  animation: drop 0.25s var(--spring) both;
+}
+
+.thread-quiet {
+  color: var(--muted);
+}
+
+.thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.thread-list li {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.thread-list .label {
+  color: var(--muted);
+}
+
+.thread-list .label a {
+  color: var(--ink);
+}
+
+.thread-list .label button {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--tomato);
+}
+
+.thread-list .label button:hover {
+  text-decoration: underline;
+}
+
+.thread-list p:not(.label) {
+  margin-top: 2px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.thread-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.thread-form .field-input {
+  min-height: 46px;
+  resize: vertical;
+}
+
+.thread-form .button {
+  flex: none;
 }
