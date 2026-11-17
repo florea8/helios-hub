@@ -104,6 +104,37 @@ npm run build
 
 The compiled frontend assets will be in `frontend/dist/`.
 
+## Deployment
+
+The frontend is a static site and runs on Vercel. The backend keeps live Socket.IO connections, a SQLite file and uploaded files on disk, so it needs a long-running server with a persistent volume; it runs on Railway.
+
+### Backend on Railway
+
+1. Create a project from this GitHub repository and set the service's **root directory** to `backend`. Railway runs `npm start`.
+2. Add a **volume** mounted at `/data`. The database and uploads live there, so they survive redeploys.
+3. Set the variables:
+
+   | Variable | Value |
+   |----------|-------|
+   | `NODE_ENV` | `production` |
+   | `JWT_SECRET` | a long random string, e.g. from `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
+   | `DATABASE_URL` | `/data/helios.sqlite` |
+   | `UPLOAD_DIR` | `/data/uploads` |
+   | `CORS_ORIGINS` | the frontend's address, e.g. `https://helios.vercel.app` |
+   | `GROQ_API_KEY` | optional, for the room assistant |
+
+   Railway provides `PORT`.
+4. Generate a public domain for the service. `/test-db` answers `{"ok":true}` when the server is up.
+
+### Frontend on Vercel
+
+1. Import the repository and set the **root directory** to `frontend`. Vercel detects Vite.
+2. Set `VITE_API_URL` to the backend's Railway address, e.g. `https://helios-api.up.railway.app`.
+3. Deploy. `frontend/vercel.json` sends every route to the app, so links like `/profile` work on reload.
+4. Put the Vercel address in the backend's `CORS_ORIGINS`.
+
+Pushes to `main` redeploy both. A new deployment starts with an empty database.
+
 ## Scripts
 
 | Command | Description |
