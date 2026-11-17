@@ -149,3 +149,21 @@
 .thread-form .button {
   flex: none;
 }
+
+/* A single post on its own page. */
+
+.post-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 760px;
+  padding-block: 32px 80px;
+}
+
+.post-page .link {
+  align-self: flex-start;
+}
+
+.post-page .post {
+  border-top: var(--line);
+}

@@ -157,6 +157,9 @@ exports.getPostById = async (req, res) => {
       return res.status(404).json({ message: 'Post not found' });
     }
 
+    row.tags = db
+      .prepare('SELECT t.id, t.name, t.color FROM post_tags pt JOIN tags t ON t.id = pt.tag_id WHERE pt.post_id = ?')
+      .all(row.id);
     res.json(row);
   } catch (err) {
     console.error(err);

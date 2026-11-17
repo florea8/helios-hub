@@ -18,7 +18,10 @@ const PostCard = ({ post, onLike = null, openReplies = false }) => {
       </Link>
       <div>
         <p className="label">
-          <Link to={`/profile/${post.user_id}`}>{post.username}</Link> · {formatDate(post.created_at)}
+          <Link to={`/profile/${post.user_id}`}>{post.username}</Link> ·{' '}
+          <Link to={`/posts/${post.id}`} title="Open this post">
+            {formatDate(post.created_at)}
+          </Link>
         </p>
         {post.title && <h3>{post.title}</h3>}
         <p>{post.description}</p>

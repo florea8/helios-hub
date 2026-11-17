@@ -16,6 +16,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Rooms = lazy(() => import('./pages/Rooms'));
 const Friends = lazy(() => import('./pages/Friends'));
 const Profile = lazy(() => import('./pages/Profile'));
+const PostPage = lazy(() => import('./pages/PostPage'));
 
 // Each page opens at the top instead of keeping the previous page's scroll.
 function ScrollToTop() {
@@ -50,6 +51,7 @@ function App() {
                 <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
                 <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
                 <Route path="/profile/:userId" element={<RequireAuth><Profile /></RequireAuth>} />
+                <Route path="/posts/:postId" element={<RequireAuth><PostPage /></RequireAuth>} />
                 <Route path="/rooms" element={<RequireAuth><Rooms /></RequireAuth>} />
                 <Route path="/friends" element={<RequireAuth><Friends /></RequireAuth>} />
               </Routes>
