@@ -1,4 +1,4 @@
-// The interests shown on the landing and sign-in pages. The server seeds the same ones.
+// Examples for the landing and sign-in pages. Real interests are created by the people using Helios.
 export const INTERESTS = [
   { name: 'Electronics', color: '#2fd39a' },
   { name: 'Photography', color: '#ffd60a' },

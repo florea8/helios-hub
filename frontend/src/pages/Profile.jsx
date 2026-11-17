@@ -124,6 +124,19 @@ const ProfilePage = () => {
     if (!allTags.length) api.get('/api/tags').then(({ data }) => setAllTags(data)).catch(fail('Could not load the interests.'));
   };
 
+  // Adds an interest nobody has created yet, so the picker can select it.
+  const createTag = async (name) => {
+    try {
+      const { data: tag } = await api.post('/api/tags', { name });
+      setAllTags((prev) =>
+        prev.some((t) => t.id === tag.id) ? prev : [...prev, tag].sort((a, b) => a.name.localeCompare(b.name))
+      );
+      return tag;
+    } catch (err) {
+      fail('Could not add the interest.')(err);
+    }
+  };
+
   const save = async (e) => {
     e.preventDefault();
     const { interests, ...details } = form;
@@ -326,8 +339,9 @@ const ProfilePage = () => {
             <TagPicker
               tags={allTags}
               selected={form.interests}
-              onChange={(interests) => setForm({ ...form, interests })}
+              onChange={(interests) => setForm((f) => ({ ...f, interests }))}
               max={8}
+              onCreate={createTag}
             />
             <label className="field">
               <span className="label">Location</span>
