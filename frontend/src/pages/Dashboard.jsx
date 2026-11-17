@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import api, { errorMessage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
@@ -12,6 +12,8 @@ import UserListItem from '../components/UserListItem';
 import ChatWindow from '../components/ChatWindow';
 import EmptyState from '../components/EmptyState';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import TagPicker from '../components/TagPicker';
+import InterestTag from '../components/InterestTag';
 import { tagStyle } from '../interests';
 import '../styles/Dashboard.css';
 
@@ -30,31 +32,49 @@ const EMPTY_DRAFT = { title: '', description: '', image: null, tags: [] };
 const MAX_TAGS = 3;
 
 // The server does the filtering, so older posts are found too.
-const feedUrl = (offset, tagId, query) =>
+const feedUrl = (offset, { view, tagId, query }) =>
   `/api/posts?limit=${PAGE_SIZE}&offset=${offset}` +
+  (view === 'mine' ? '&feed=mine' : '') +
   (tagId ? `&tag=${tagId}` : '') +
   (query ? `&q=${encodeURIComponent(query)}` : '');
+
+// What to say when the feed is empty, and where to go next.
+const FeedEmpty = ({ view, filtered, hasInterests }) => {
+  if (filtered) return <EmptyState title="Nothing matches" message="Try another search or filter." />;
+  if (view === 'mine' && !hasInterests)
+    return (
+      <EmptyState
+        title="Pick your interests"
+        message="Choose a few on your profile and this feed shows the posts about them."
+        action={<Link to="/profile" className="link">Choose interests</Link>}
+      />
+    );
+  if (view === 'mine')
+    return <EmptyState title="Quiet for now" message="Nobody has posted about your interests yet. Start the conversation above." />;
+  return <EmptyState title="No posts yet" message="Write the first one above." />;
+};
 
 const Dashboard = () => {
   const [feed, setFeed] = useState({ key: null, posts: [], hasMore: false });
   const [loadingMore, setLoadingMore] = useState(false);
   const [allTags, setAllTags] = useState([]);
   const [tagId, setTagId] = useState(null);
+  const { user } = useAuth();
+  // People who picked interests start on their own feed.
+  const [view, setView] = useState(() => (user.interests?.length ? 'mine' : 'all'));
   const [search, setSearch] = useState('');
   const [draft, setDraft] = useState(EMPTY_DRAFT);
-  const [newTag, setNewTag] = useState('');
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState('');
   const [friends, setFriends] = useState([]);
   const [chatFriend, setChatFriend] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const { getSocket, isUserOnline, sendMessage } = useSocket();
   const { markMessagesAsRead } = useNotifications();
   const query = useDebounce(search, 300).trim();
   // The feed shown belongs to one filter; while the next one loads, show the skeleton.
-  const feedKey = `${tagId}|${query}`;
+  const filters = { view, tagId, query };
+  const feedKey = `${view}|${tagId}|${query}`;
   const loading = feed.key !== feedKey;
   const posts = feed.posts;
   const setPosts = (update) => setFeed((prev) => ({ ...prev, posts: update(prev.posts) }));
@@ -62,34 +82,30 @@ const Dashboard = () => {
   const reloadFeed = useCallback(
     () =>
       api
-        .get(feedUrl(0, tagId, query))
-        .then(({ data }) => setFeed({ key: `${tagId}|${query}`, posts: data.posts, hasMore: data.hasMore })),
-    [tagId, query]
+        .get(feedUrl(0, { view, tagId, query }))
+        .then(({ data }) => setFeed({ key: `${view}|${tagId}|${query}`, posts: data.posts, hasMore: data.hasMore })),
+    [view, tagId, query]
   );
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
     Promise.all([api.get('/api/tags'), api.get('/api/friends/list')])
       .then(([tags, friendList]) => {
         setAllTags(tags.data);
         setFriends(friendList.data);
       })
       .catch((err) => setError(errorMessage(err, 'Could not load the feed.')));
-  }, [user, navigate]);
+  }, []);
 
   useEffect(() => {
     let stale = false;
     api
-      .get(feedUrl(0, tagId, query))
-      .then(({ data }) => !stale && setFeed({ key: `${tagId}|${query}`, posts: data.posts, hasMore: data.hasMore }))
+      .get(feedUrl(0, { view, tagId, query }))
+      .then(({ data }) => !stale && setFeed({ key: `${view}|${tagId}|${query}`, posts: data.posts, hasMore: data.hasMore }))
       .catch((err) => setError(errorMessage(err, 'Could not load the feed.')));
     return () => {
       stale = true;
     };
-  }, [tagId, query]);
+  }, [view, tagId, query]);
 
   useEffect(() => {
     const socket = getSocket();
@@ -105,7 +121,7 @@ const Dashboard = () => {
   const loadMore = async () => {
     setLoadingMore(true);
     try {
-      const { data } = await api.get(feedUrl(posts.length, tagId, query));
+      const { data } = await api.get(feedUrl(posts.length, filters));
       setFeed((prev) => ({ ...prev, posts: [...prev.posts, ...data.posts], hasMore: data.hasMore }));
     } catch (err) {
       setError(errorMessage(err, 'Could not load more posts.'));
@@ -127,19 +143,14 @@ const Dashboard = () => {
     setPosting(false);
   };
 
-  const toggleDraftTag = (id) =>
-    setDraft((d) => ({ ...d, tags: d.tags.includes(id) ? d.tags.filter((t) => t !== id) : [...d.tags, id] }));
-
-  // Creates the tag if nobody has yet, then picks it for this post.
-  const addTag = async () => {
-    if (!newTag.trim()) return;
+  // Creates the interest if nobody has yet, and returns it for the picker to select.
+  const createTag = async (name) => {
     try {
-      const { data: tag } = await api.post('/api/tags', { name: newTag });
+      const { data: tag } = await api.post('/api/tags', { name });
       setAllTags((prev) =>
         prev.some((t) => t.id === tag.id) ? prev : [...prev, tag].sort((a, b) => a.name.localeCompare(b.name))
       );
-      setDraft((d) => (d.tags.includes(tag.id) || d.tags.length >= MAX_TAGS ? d : { ...d, tags: [...d.tags, tag.id] }));
-      setNewTag('');
+      return tag;
     } catch (err) {
       setError(errorMessage(err, 'Could not add the interest.'));
     }
@@ -199,6 +210,13 @@ const Dashboard = () => {
             <b>{user?.points ?? 0}</b>
             <span className="label">points</span>
           </p>
+          {user.interests?.length > 0 && (
+            <div className="dash-interests">
+              {user.interests.map((tag) => (
+                <InterestTag key={tag.id} interest={tag} />
+              ))}
+            </div>
+          )}
           <Link to="/profile" className="link">
             Your profile
           </Link>
@@ -228,51 +246,13 @@ const Dashboard = () => {
               maxLength={5000}
               required
             />
-            <div className="dash-tags">
-              <span className="label">
-                Interests · {draft.tags.length}/{MAX_TAGS}
-              </span>
-              <div className="picks">
-                {allTags.map((tag) => {
-                  const picked = draft.tags.includes(tag.id);
-                  return (
-                    <button
-                      key={tag.id}
-                      type="button"
-                      className="tag"
-                      style={tagStyle(tag)}
-                      aria-pressed={picked}
-                      disabled={!picked && draft.tags.length >= MAX_TAGS}
-                      onClick={() => toggleDraftTag(tag.id)}
-                    >
-                      {tag.name}
-                    </button>
-                  );
-                })}
-                <span className="dash-newtag">
-                  <input
-                    className="field-input"
-                    aria-label="New interest"
-                    placeholder="+ New interest"
-                    value={newTag}
-                    maxLength={30}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    onKeyDown={(e) => {
-                      // Enter here adds the interest instead of publishing the post.
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addTag();
-                      }
-                    }}
-                  />
-                  {newTag.trim() && (
-                    <button type="button" className="link" onClick={addTag}>
-                      Add
-                    </button>
-                  )}
-                </span>
-              </div>
-            </div>
+            <TagPicker
+              tags={allTags}
+              selected={draft.tags}
+              onChange={(tags) => setDraft((d) => ({ ...d, tags }))}
+              max={MAX_TAGS}
+              onCreate={createTag}
+            />
             {draft.image && (
               <div className="dash-preview">
                 <img src={draft.image} alt="Attached" />
@@ -299,6 +279,14 @@ const Dashboard = () => {
           )}
 
           <div className="dash-filters">
+            <nav className="dash-view" aria-label="Which posts">
+              <button type="button" aria-pressed={view === 'mine'} onClick={() => setView('mine')}>
+                For you
+              </button>
+              <button type="button" aria-pressed={view === 'all'} onClick={() => setView('all')}>
+                Everything
+              </button>
+            </nav>
             <input
               className="field-input"
               type="search"
@@ -310,7 +298,7 @@ const Dashboard = () => {
             {allTags.length > 0 && (
               <div className="picks">
                 <button type="button" className="tag" aria-pressed={!tagId} onClick={() => setTagId(null)}>
-                  Everything
+                  All interests
                 </button>
                 {allTags.map((tag) => (
                   <button
@@ -337,10 +325,7 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <EmptyState
-              title={query || tagId ? 'Nothing matches' : 'No posts yet'}
-              message={query || tagId ? 'Try another search or filter.' : 'Write the first one above.'}
-            />
+            <FeedEmpty view={view} filtered={Boolean(query || tagId)} hasInterests={user.interests?.length > 0} />
           )}
 
           {feed.hasMore && !loading && (

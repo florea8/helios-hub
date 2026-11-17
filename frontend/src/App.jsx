@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import { NotificationProvider } from './context/NotificationContext';
 import NotificationToast from './components/NotificationToast';
@@ -26,6 +26,14 @@ function ScrollToTop() {
   return null;
 }
 
+// Pages that need an account wait until the saved session has been checked,
+// so a reload on a slow connection does not bounce a signed-in person to the login page.
+function RequireAuth({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingSkeleton count={3} />;
+  return user ? children : <Navigate to="/login" replace />;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -34,17 +42,16 @@ function App() {
           <Router>
             <ScrollToTop />
             <NotificationToast />
-            <Suspense fallback={<LoadingSkeleton type="page" count={1} />}>
+            <Suspense fallback={<LoadingSkeleton count={3} />}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/home" element={<Dashboard />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/profile/:userId" element={<Profile />} />
-                <Route path="/rooms" element={<Rooms />} />
-                <Route path="/friends" element={<Friends />} />
+                <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+                <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+                <Route path="/profile/:userId" element={<RequireAuth><Profile /></RequireAuth>} />
+                <Route path="/rooms" element={<RequireAuth><Rooms /></RequireAuth>} />
+                <Route path="/friends" element={<RequireAuth><Friends /></RequireAuth>} />
               </Routes>
             </Suspense>
           </Router>

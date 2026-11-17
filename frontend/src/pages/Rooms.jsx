@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import api, { errorMessage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
@@ -15,7 +15,6 @@ import '../styles/Rooms.css';
 const Rooms = () => {
   const { user } = useAuth();
   const { socket } = useSocket();
-  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   // Notification links written by the server use ?roomId=…
   const roomId = Number(params.get('room') || params.get('roomId')) || null;
@@ -28,10 +27,6 @@ const Rooms = () => {
   const [draft, setDraft] = useState(null); // new-room form, null while closed
   const voice = useVoiceChat(socket, roomId, user);
   const fail = useCallback((fallback) => (err) => setError(errorMessage(err, fallback)), []);
-
-  useEffect(() => {
-    if (!user) navigate('/login');
-  }, [user, navigate]);
 
   useEffect(() => {
     api

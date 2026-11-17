@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 import Avatar from '../components/Avatar';
 import Dialog from '../components/Dialog';
+import InterestTag from '../components/InterestTag';
+import TagPicker from '../components/TagPicker';
 import PostCard from '../components/PostCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSkeleton from '../components/LoadingSkeleton';
@@ -45,12 +47,12 @@ const Profile = () => {
   const [tab, setTab] = useState('posts');
   const [friendship, setFriendship] = useState(null);
   const [form, setForm] = useState(null); // edit form, null while closed
+  const [allTags, setAllTags] = useState([]);
   const [error, setError] = useState('');
   const fail = useCallback((fallback) => (err) => setError(errorMessage(err, fallback)), []);
 
   useEffect(() => {
-    if (!user) return navigate('/login');
-    if (Number(userId) === user.id) return navigate('/profile', { replace: true });
+    if (Number(userId) === user.id) navigate('/profile', { replace: true });
   }, [user, userId, navigate]);
 
   useEffect(() => {
@@ -109,19 +111,26 @@ const Profile = () => {
     }
   };
 
-  const openEditor = () =>
+  const openEditor = () => {
     setForm({
       bio: profile.bio || '',
       location: profile.location || '',
       ...Object.fromEntries(LINKS.map(([key]) => [key, profile[key] || ''])),
       is_profile_public: profile.is_profile_public !== 0,
+      interests: profile.interests.map((tag) => tag.id),
     });
+    if (!allTags.length) api.get('/api/tags').then(({ data }) => setAllTags(data)).catch(fail('Could not load the interests.'));
+  };
 
   const save = async (e) => {
     e.preventDefault();
+    const { interests, ...details } = form;
     try {
-      await api.put('/api/profile/update', form);
-      const saved = { ...form, is_profile_public: form.is_profile_public ? 1 : 0 };
+      const [, picked] = await Promise.all([
+        api.put('/api/profile/update', details),
+        api.put('/api/profile/interests', { tags: interests }),
+      ]);
+      const saved = { ...details, is_profile_public: details.is_profile_public ? 1 : 0, interests: picked.data.interests };
       setProfile((prev) => ({ ...prev, ...saved }));
       updateUser(saved);
       setForm(null);
@@ -187,6 +196,13 @@ const Profile = () => {
                 <p className={profile.bio ? '' : 'profile-quiet'}>
                   {profile.bio || (own ? 'Add a short bio so people know what you are into.' : 'No bio yet.')}
                 </p>
+                {profile.interests.length > 0 && (
+                  <div className="profile-interests">
+                    {profile.interests.map((tag) => (
+                      <InterestTag key={tag.id} interest={tag} />
+                    ))}
+                  </div>
+                )}
                 {links.length > 0 && (
                   <div className="profile-links">
                     {links.map(([key, label]) => (
@@ -305,6 +321,12 @@ const Profile = () => {
               <span className="label">Bio</span>
               <textarea className="field-input" rows={3} maxLength={300} {...field('bio')} autoFocus />
             </label>
+            <TagPicker
+              tags={allTags}
+              selected={form.interests}
+              onChange={(interests) => setForm({ ...form, interests })}
+              max={8}
+            />
             <label className="field">
               <span className="label">Location</span>
               <input className="field-input" maxLength={100} {...field('location')} />

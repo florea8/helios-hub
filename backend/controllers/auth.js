@@ -5,18 +5,24 @@ const fs = require('fs');
 const path = require('path');
 const { AppError, asyncHandler } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
+const { interestsOf, setInterests } = require('../utils/interests');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 exports.register = asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, interests } = req.body;
 
   try {
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const stmt = db.prepare('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)');
-    stmt.run(username, email, passwordHash, 'NORMAL');
+    // The account and its first interests are saved together.
+    db.transaction(() => {
+      const { lastInsertRowid } = db
+        .prepare('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)')
+        .run(username, email, passwordHash, 'NORMAL');
+      setInterests(lastInsertRowid, interests);
+    })();
 
     logger.info('User registered successfully', { email, username });
     res.status(201).json({ message: 'User created' });
@@ -142,7 +148,7 @@ exports.getProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json(user);
+    res.json({ ...user, interests: interestsOf(userId) });
   } catch (err) {
     console.error('Error:', err);
     res.status(500).json({ message: 'Failed to get profile' });

@@ -73,6 +73,7 @@ exports.getPosts = async (req, res) => {
   const author = parseInt(req.query.author) || null;
   const tag = parseInt(req.query.tag) || null;
   const search = String(req.query.q || '').trim();
+  const mine = req.query.feed === 'mine';
 
   const limitNum = parseInt(limit);
   const offsetNum = parseInt(offset);
@@ -87,6 +88,12 @@ exports.getPosts = async (req, res) => {
   if (tag) {
     conditions.push('p.id IN (SELECT post_id FROM post_tags WHERE tag_id = ?)');
     filter.push(tag);
+  }
+  if (mine) {
+    conditions.push(
+      'p.id IN (SELECT pt.post_id FROM post_tags pt JOIN user_interests ui ON ui.tag_id = pt.tag_id WHERE ui.user_id = ?)'
+    );
+    filter.push(userId);
   }
   if (search) {
     conditions.push("(p.title LIKE ? ESCAPE '\\' OR p.description LIKE ? ESCAPE '\\' OR u.username LIKE ? ESCAPE '\\')");

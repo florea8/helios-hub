@@ -1,23 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api, { errorMessage } from '../services/api';
 import AuthLayout from '../components/AuthLayout';
 import PasswordInput from '../components/PasswordInput';
+import TagPicker from '../components/TagPicker';
 
 export default function Register() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [tags, setTags] = useState([]);
+  const [interests, setInterests] = useState([]);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  // Interests are optional here; without the list the form still works.
+  useEffect(() => {
+    api.get('/api/tags').then(({ data }) => setTags(data)).catch(() => {});
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSubmitting(true);
     try {
-      await api.post('/api/auth/register', { username, email, password });
+      await api.post('/api/auth/register', { username, email, password, interests });
       navigate('/login', { state: { registered: true, email } });
     } catch (err) {
       setError(errorMessage(err, 'Could not create your account. Please try again.'));
@@ -85,6 +93,15 @@ export default function Register() {
             required
           />
         </label>
+        {tags.length > 0 && (
+          <TagPicker
+            tags={tags}
+            selected={interests}
+            onChange={setInterests}
+            max={8}
+            label="What are you into? (optional)"
+          />
+        )}
         <button type="submit" className="button button-primary button-block" disabled={submitting}>
           {submitting && <span className="button-spinner" aria-hidden="true" />}
           {submitting ? 'Creating account…' : 'Create account'}

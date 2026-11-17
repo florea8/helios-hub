@@ -95,6 +95,12 @@ label.profile-picture:focus-within > .label {
   color: var(--muted);
 }
 
+.profile-interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .profile-links,
 .profile-actions {
   display: flex;

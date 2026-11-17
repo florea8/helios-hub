@@ -63,6 +63,11 @@
   margin-bottom: 8px;
 }
 
+.friends-hint {
+  margin: 4px 0;
+  color: var(--muted);
+}
+
 .friends-body .person:last-child {
   border-bottom: 0;
 }

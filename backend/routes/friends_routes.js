@@ -9,6 +9,9 @@ router.use(authenticate);
 // Search users
 router.get('/search', friendsController.searchUsers);
 
+// People with shared interests
+router.get('/suggestions', friendsController.getSuggestions);
+
 // Get friends list
 router.get('/list', friendsController.getFriendsList);
 

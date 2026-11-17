@@ -288,6 +288,37 @@ exports.getSentRequests = (req, res) => {
   }
 };
 
+// People who share at least one interest and have no friendship or pending request with you,
+// most shared interests first. Private profiles are left out.
+exports.getSuggestions = (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const rows = db.prepare(`
+      SELECT u.id, u.username, u.profile_picture, u.last_seen, COUNT(*) AS shared_count,
+             json_group_array(json_object('id', t.id, 'name', t.name, 'color', t.color)) AS shared
+      FROM user_interests mine
+      JOIN user_interests theirs ON theirs.tag_id = mine.tag_id AND theirs.user_id != mine.user_id
+      JOIN users u ON u.id = theirs.user_id
+      JOIN tags t ON t.id = mine.tag_id
+      WHERE mine.user_id = ?
+        AND COALESCE(u.is_profile_public, 1) != 0
+        AND NOT EXISTS (
+          SELECT 1 FROM friends f
+          WHERE (f.user_id = ? AND f.friend_id = u.id) OR (f.friend_id = ? AND f.user_id = u.id)
+        )
+      GROUP BY u.id
+      ORDER BY shared_count DESC, u.username
+      LIMIT 12
+    `).all(userId, userId, userId);
+
+    res.json(rows.map((row) => ({ ...row, shared: JSON.parse(row.shared) })));
+  } catch (error) {
+    console.error('getSuggestions error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 // Search users (to add as friends)
 exports.searchUsers = (req, res) => {
   const { query } = req.query;

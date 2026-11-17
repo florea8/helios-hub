@@ -13,7 +13,8 @@ const schemas = {
         'string.pattern.base': 'Username can only contain letters, numbers, underscores, dots and hyphens'
       }),
     email: Joi.string().email().required(),
-    password: Joi.string().min(6).max(100).required()
+    password: Joi.string().min(6).max(100).required(),
+    interests: Joi.array().items(Joi.number().integer().positive()).max(8).unique().default([])
   }),
 
   login: Joi.object({
@@ -40,6 +41,10 @@ const schemas = {
   // Comment schema
   addComment: Joi.object({
     content: Joi.string().min(1).max(1000).required()
+  }),
+
+  setInterests: Joi.object({
+    tags: Joi.array().items(Joi.number().integer().positive()).max(8).unique().required()
   }),
 
   // Room schemas

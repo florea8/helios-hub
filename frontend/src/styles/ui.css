@@ -512,6 +512,36 @@
   transform: none;
 }
 
+/* Interest picker */
+
+.tag-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tag-picker > .label {
+  color: var(--muted);
+}
+
+.tag-new {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.tag-new .field-input {
+  width: 150px;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 0.8125rem;
+  border-style: dashed;
+}
+
+.tag-new .field-input:focus {
+  border-style: solid;
+}
+
 /* Empty and loading states */
 
 .empty {

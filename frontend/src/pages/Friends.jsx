@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import api, { errorMessage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
@@ -35,12 +35,12 @@ export default function Friends() {
   const [requests, setRequests] = useState([]);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
+  const [suggestions, setSuggestions] = useState(null); // null until first loaded
   const [searching, setSearching] = useState(false);
   const [chatFriend, setChatFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState('');
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { getSocket, isUserOnline, sendMessage } = useSocket();
   const { unreadMessages, pendingFriendRequests, markMessagesAsRead, decrementFriendRequests } = useNotifications();
   const search = useDebounce(query.trim(), 300);
@@ -58,9 +58,17 @@ export default function Friends() {
   );
 
   useEffect(() => {
-    if (!user) navigate('/login');
-    else loadFriends();
-  }, [user, navigate, loadFriends]);
+    loadFriends();
+  }, [loadFriends]);
+
+  // Suggestions load the first time the find tab opens.
+  useEffect(() => {
+    if (tab !== 'find' || suggestions) return;
+    api
+      .get('/api/friends/suggestions')
+      .then(({ data }) => setSuggestions(data))
+      .catch(fail('Could not load suggestions.'));
+  }, [tab, suggestions, fail]);
 
   // Search as you type, once there are two characters.
   useEffect(() => {
@@ -121,7 +129,9 @@ export default function Friends() {
     if (person.friendship_status === 'request_received') return setTab('requests');
     try {
       await api.post('/api/friends/request', { friendId: person.id });
-      setResults((prev) => prev.map((p) => (p.id === person.id ? { ...p, friendship_status: 'request_sent' } : p)));
+      const sent = (list) => list?.map((p) => (p.id === person.id ? { ...p, friendship_status: 'request_sent' } : p));
+      setResults(sent);
+      setSuggestions(sent);
     } catch (err) {
       fail('Could not send the request.')(err);
     }
@@ -228,7 +238,42 @@ export default function Friends() {
                   }}
                   autoFocus
                 />
+                {query.trim().length < 2 && (
+                  <>
+                    <p className="label friends-hint">People who share your interests</p>
+                    {!suggestions ? (
+                      <LoadingSkeleton count={2} />
+                    ) : suggestions.length ? (
+                      suggestions.map((person) => (
+                        <UserListItem
+                          key={person.id}
+                          user={person}
+                          subtitle={person.shared.map((tag) => tag.name).join(' · ')}
+                          actions={
+                            <button
+                              type="button"
+                              className="button"
+                              disabled={person.friendship_status === 'request_sent'}
+                              onClick={() => addFriend(person)}
+                            >
+                              {SEARCH_ACTION[person.friendship_status || 'none']}
+                            </button>
+                          }
+                        />
+                      ))
+                    ) : user.interests?.length ? (
+                      <EmptyState title="Nobody new yet" message="No one else has picked your interests so far. Search by name instead." />
+                    ) : (
+                      <EmptyState
+                        title="Pick your interests"
+                        message="Choose a few on your profile to see people who share them."
+                        action={<Link to="/profile" className="link">Choose interests</Link>}
+                      />
+                    )}
+                  </>
+                )}
                 {search.length >= 2 &&
+                  query.trim().length >= 2 &&
                   !searching &&
                   (results.length ? (
                     results.map((person) => (

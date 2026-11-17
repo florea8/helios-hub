@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { interestsOf, setInterests } = require('../utils/interests');
 
 // Update user profile (bio, social links, privacy)
 exports.updateProfile = async (req, res) => {
@@ -56,9 +57,20 @@ exports.getUserProfile = async (req, res) => {
       delete user.email;
     }
 
-    res.json(user);
+    res.json({ ...user, interests: interestsOf(user.id) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to fetch profile' });
+  }
+};
+
+// Replace the signed-in user's interests
+exports.updateInterests = (req, res) => {
+  try {
+    setInterests(req.user.id, req.body.tags);
+    res.json({ interests: interestsOf(req.user.id) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to save interests' });
   }
 };

@@ -64,34 +64,6 @@
   resize: vertical;
 }
 
-.dash-tags {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.dash-tags > .label {
-  color: var(--muted);
-}
-
-.dash-newtag {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.dash-newtag .field-input {
-  width: 150px;
-  height: 32px;
-  padding: 0 8px;
-  font-size: 0.8125rem;
-  border-style: dashed;
-}
-
-.dash-newtag .field-input:focus {
-  border-style: solid;
-}
-
 .dash-composer-actions {
   display: flex;
   gap: 16px;
@@ -121,7 +93,43 @@
   text-decoration: underline;
 }
 
+.dash-interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dash-interests .tag {
+  padding: 3px 8px;
+  font-size: 0.75rem;
+}
+
 /* Filters and list */
+
+.dash-view {
+  display: flex;
+  align-self: flex-start;
+  border: var(--line);
+}
+
+.dash-view button {
+  padding: 8px 16px;
+  font-weight: 800;
+}
+
+.dash-view button + button {
+  border-left: var(--line);
+}
+
+.dash-view button:hover {
+  background: var(--surface);
+}
+
+.dash-view [aria-pressed='true'],
+.dash-view [aria-pressed='true']:hover {
+  color: var(--on-color);
+  background: var(--yellow);
+}
 
 .dash-filters {
   display: flex;
