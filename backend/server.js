@@ -363,6 +363,21 @@ try {
   }
 }
 
+// Starter interests, so a new install has tags to pick from. Matches the landing page.
+const starterTags = db.prepare('INSERT OR IGNORE INTO tags (name, color) VALUES (?, ?)');
+for (const [name, color] of [
+  ['Electronics', '#2fd39a'],
+  ['Photography', '#ffd60a'],
+  ['Chess', '#ff8a7d'],
+  ['Open source', '#9db0ff'],
+  ['Music production', '#ffb3e6'],
+  ['Design', '#ffc078'],
+  ['Writing', '#7fe0e0'],
+  ['Gardening', '#c3f584'],
+]) {
+  starterTags.run(name, color);
+}
+
 const authRoutes = require('./routes/auth_routes');
 const postsRoutes = require('./routes/posts_routes');
 const roomsRoutes = require('./routes/rooms_routes');

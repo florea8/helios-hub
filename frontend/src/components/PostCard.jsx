@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { fileUrl } from '../services/api';
 import Avatar from './Avatar';
+import InterestTag from './InterestTag';
 import '../styles/Post.css';
 
 const formatDate = (date) =>
@@ -21,9 +22,7 @@ const PostCard = ({ post, onLike = null }) => (
       {post.tags?.length > 0 && (
         <div className="post-tags">
           {post.tags.map((tag) => (
-            <span key={tag.id} className="tag" style={{ '--c': tag.color }}>
-              {tag.name}
-            </span>
+            <InterestTag key={tag.id} interest={tag} />
           ))}
         </div>
       )}

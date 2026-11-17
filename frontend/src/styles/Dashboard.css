@@ -64,6 +64,34 @@
   resize: vertical;
 }
 
+.dash-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dash-tags > .label {
+  color: var(--muted);
+}
+
+.dash-newtag {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dash-newtag .field-input {
+  width: 150px;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 0.8125rem;
+  border-style: dashed;
+}
+
+.dash-newtag .field-input:focus {
+  border-style: solid;
+}
+
 .dash-composer-actions {
   display: flex;
   gap: 16px;

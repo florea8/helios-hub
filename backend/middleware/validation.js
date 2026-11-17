@@ -27,7 +27,8 @@ const schemas = {
     description: Joi.string().min(10).max(5000).required(),
     status: Joi.string().valid('OPEN', 'IN_PROGRESS', 'CLOSED').default('OPEN'),
     post_type: Joi.string().valid('standard', 'room').default('standard'),
-    image: Joi.string().allow(null, '')
+    image: Joi.string().allow(null, ''),
+    tags: Joi.array().items(Joi.number().integer().positive()).max(3).unique().default([])
   }),
 
   updatePost: Joi.object({

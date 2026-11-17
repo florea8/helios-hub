@@ -1,5 +1,7 @@
+import { tagStyle } from '../interests';
+
 const InterestTag = ({ interest }) => (
-  <span className="tag" style={{ '--c': interest.color, '--p': interest.shape }}>
+  <span className="tag" style={tagStyle(interest)}>
     {interest.name}
   </span>
 );

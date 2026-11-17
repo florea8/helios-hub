@@ -506,6 +506,12 @@
   box-shadow: 3px 3px 0 var(--ink);
 }
 
+.picks .tag:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Empty and loading states */
 
 .empty {

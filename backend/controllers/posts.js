@@ -10,7 +10,7 @@ exports.setSocketInstance = (io) => {
 
 // CREATE POST
 exports.createPost = async (req, res) => {
-  const { title, description, post_type, image } = req.body;
+  const { title, description, post_type, image, tags } = req.body;
   const userId = req.user.id;
 
   // For room posts, title is required; for standard posts, only description is required
@@ -49,10 +49,17 @@ exports.createPost = async (req, res) => {
       db.prepare("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0").run();
     }
 
-    const stmt = db.prepare('INSERT INTO posts (user_id, title, description, post_type, image) VALUES (?, ?, ?, ?, ?)');
-    const result = stmt.run(userId, title || '', description, type, image || null);
+    // The post and its tags are saved together or not at all. Unknown tag ids are skipped.
+    const postId = db.transaction(() => {
+      const { lastInsertRowid } = db
+        .prepare('INSERT INTO posts (user_id, title, description, post_type, image) VALUES (?, ?, ?, ?, ?)')
+        .run(userId, title || '', description, type, image || null);
+      const tag = db.prepare('INSERT INTO post_tags (post_id, tag_id) SELECT ?, id FROM tags WHERE id = ?');
+      for (const tagId of tags || []) tag.run(lastInsertRowid, tagId);
+      return lastInsertRowid;
+    })();
 
-    res.status(201).json({ message: 'Post created', postId: result.lastInsertRowid });
+    res.status(201).json({ message: 'Post created', postId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'DB error' });
@@ -64,15 +71,33 @@ exports.getPosts = async (req, res) => {
   const userId = req.user?.id; // Optional if not authenticated
   const { limit = 10, offset = 0 } = req.query;
   const author = parseInt(req.query.author) || null;
+  const tag = parseInt(req.query.tag) || null;
+  const search = String(req.query.q || '').trim();
 
   const limitNum = parseInt(limit);
   const offsetNum = parseInt(offset);
-  const where = author ? 'WHERE p.user_id = ?' : '';
-  const filter = author ? [author] : [];
+
+  // Optional filters: one person's posts, one tag, and text in the title, body or author name.
+  const conditions = [];
+  const filter = [];
+  if (author) {
+    conditions.push('p.user_id = ?');
+    filter.push(author);
+  }
+  if (tag) {
+    conditions.push('p.id IN (SELECT post_id FROM post_tags WHERE tag_id = ?)');
+    filter.push(tag);
+  }
+  if (search) {
+    conditions.push("(p.title LIKE ? ESCAPE '\\' OR p.description LIKE ? ESCAPE '\\' OR u.username LIKE ? ESCAPE '\\')");
+    const like = `%${search.replace(/[\\%_]/g, '\\$&')}%`;
+    filter.push(like, like, like);
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
   try {
     // Get total count
-    const { total } = db.prepare(`SELECT COUNT(*) as total FROM posts p ${where}`).get(...filter);
+    const { total } = db.prepare(`SELECT COUNT(*) as total FROM posts p JOIN users u ON p.user_id = u.id ${where}`).get(...filter);
 
     // Get paginated posts
     const stmt = db.prepare(`
@@ -86,7 +111,7 @@ exports.getPosts = async (req, res) => {
       FROM posts p 
       JOIN users u ON p.user_id = u.id
       ${where}
-      ORDER BY p.created_at DESC
+      ORDER BY p.created_at DESC, p.id DESC
       LIMIT ? OFFSET ?
     `);
     const rows = stmt.all(...(userId ? [userId] : []), ...filter, limitNum, offsetNum);

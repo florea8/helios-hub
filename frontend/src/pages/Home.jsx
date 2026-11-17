@@ -5,7 +5,7 @@ import Logo from '../components/Logo';
 import ThemeToggle from '../components/ThemeToggle';
 import InterestTag from '../components/InterestTag';
 import Ticker from '../components/Ticker';
-import { INTERESTS } from '../interests';
+import { INTERESTS, tagStyle } from '../interests';
 import '../styles/Home.css';
 
 // Example posts per interest: title, author, replies, state.
@@ -166,7 +166,7 @@ const Home = () => {
                 key={item.name}
                 type="button"
                 className="tag"
-                style={{ '--c': item.color, '--p': item.shape }}
+                style={tagStyle(item)}
                 aria-pressed={item === interest}
                 onClick={() => setInterest(item)}
               >
@@ -178,7 +178,7 @@ const Home = () => {
         </div>
 
         {/* The key restarts the entrance animation when the interest changes. */}
-        <ol key={interest.name} className="home-posts" style={{ '--c': interest.color, '--p': interest.shape }}>
+        <ol key={interest.name} className="home-posts" style={tagStyle(interest)}>
           {POSTS[interest.name].map(([title, author, replies, state], i) => (
             <li key={title} style={{ '--i': i }}>
               <i />
