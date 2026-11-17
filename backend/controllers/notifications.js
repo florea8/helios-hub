@@ -36,7 +36,7 @@ exports.getNotifications = (req, res) => {
       query += ' AND n.read = 0';
     }
 
-    query += ' ORDER BY n.created_at DESC LIMIT ?';
+    query += ' ORDER BY n.created_at DESC, n.id DESC LIMIT ?';
 
     const stmt = db.prepare(query);
     const notifications = stmt.all(userId, limit);
