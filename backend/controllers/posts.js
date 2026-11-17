@@ -63,14 +63,16 @@ exports.createPost = async (req, res) => {
 exports.getPosts = async (req, res) => {
   const userId = req.user?.id; // Optional if not authenticated
   const { limit = 10, offset = 0 } = req.query;
-  
+  const author = parseInt(req.query.author) || null;
+
   const limitNum = parseInt(limit);
   const offsetNum = parseInt(offset);
+  const where = author ? 'WHERE p.user_id = ?' : '';
+  const filter = author ? [author] : [];
 
   try {
     // Get total count
-    const countStmt = db.prepare('SELECT COUNT(*) as total FROM posts');
-    const { total } = countStmt.get();
+    const { total } = db.prepare(`SELECT COUNT(*) as total FROM posts p ${where}`).get(...filter);
 
     // Get paginated posts
     const stmt = db.prepare(`
@@ -82,11 +84,12 @@ exports.getPosts = async (req, res) => {
         (SELECT COUNT(*) FROM post_comments WHERE post_id = p.id) as comment_count,
         ${userId ? `(SELECT COUNT(*) FROM post_likes WHERE post_id = p.id AND user_id = ?) as user_liked` : '0 as user_liked'}
       FROM posts p 
-      JOIN users u ON p.user_id = u.id 
+      JOIN users u ON p.user_id = u.id
+      ${where}
       ORDER BY p.created_at DESC
       LIMIT ? OFFSET ?
     `);
-    const rows = userId ? stmt.all(userId, limitNum, offsetNum) : stmt.all(limitNum, offsetNum);
+    const rows = stmt.all(...(userId ? [userId] : []), ...filter, limitNum, offsetNum);
 
     // One query for the tags of every post on the page, instead of one request per post.
     const tagsByPost = new Map(rows.map((row) => [row.id, []]));

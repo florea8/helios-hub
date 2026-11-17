@@ -47,6 +47,8 @@ exports.createRoom = async (req, res) => {
 
 // GET ALL ROOMS
 exports.getAllRooms = async (req, res) => {
+  const member = parseInt(req.query.member) || null;
+
   try {
     const stmt = db.prepare(`
       SELECT 
@@ -61,9 +63,10 @@ exports.getAllRooms = async (req, res) => {
       LEFT JOIN posts p ON r.post_id = p.id
       LEFT JOIN users u ON r.created_by = u.id
       LEFT JOIN users mu ON r.music_added_by = mu.id
+      ${member ? 'WHERE r.id IN (SELECT room_id FROM room_members WHERE user_id = ?)' : ''}
       ORDER BY r.created_at DESC
     `);
-    const rows = stmt.all();
+    const rows = member ? stmt.all(member) : stmt.all();
 
     res.json(rows);
   } catch (err) {

@@ -1,139 +1,69 @@
-:root {
+/* Page-wide basics. Colours and fonts come from styles/tokens.css. */
+
+html {
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  /* clip, not hidden: hidden would make body a scroll container and stop the top bar sticking. */
+  overflow-x: clip;
   font-family: var(--font-ui);
   line-height: 1.5;
-  font-weight: 400;
-
-  /* Dark theme (default) */
-  --bg-primary: #0a0a0f;
-  --bg-primary-rgb: 10, 10, 15;
-  --bg-secondary: #141419;
-  --bg-secondary-rgb: 20, 20, 25;
-  --bg-tertiary: #1a1a24;
-  --bg-tertiary-rgb: 26, 26, 36;
-  --card-bg: #1a1a24;
-  --card-bg-rgb: 26, 26, 36;
-  --text-primary: rgba(255, 255, 255, 0.92);
-  --text-secondary: rgba(255, 255, 255, 0.65);
-  --text-tertiary: rgba(255, 255, 255, 0.45);
-  --text-on-primary: #ffffff;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --border-color-light: rgba(255, 255, 255, 0.05);
-  --primary-color: #646cff;
-  --primary-hover: #535bf2;
-  --accent-color: #41d1ff;
-  --success-color: #4ade80;
-  --warning-color: #fbbf24;
-  --error-color: #f87171;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
-
-  color-scheme: dark;
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  color: var(--ink);
+  background: var(--paper);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Light theme */
-[data-theme='light'] {
-  --bg-primary: #f5f7fa;
-  --bg-primary-rgb: 245, 247, 250;
-  --bg-secondary: #ffffff;
-  --bg-secondary-rgb: 255, 255, 255;
-  --bg-tertiary: #e8ecf1;
-  --bg-tertiary-rgb: 232, 236, 241;
-  --card-bg: #ffffff;
-  --card-bg-rgb: 255, 255, 255;
-  --text-primary: #0f1419;
-  --text-secondary: #536471;
-  --text-tertiary: #8899a6;
-  --text-on-primary: #ffffff;
-  --border-color: #cfd9de;
-  --border-color-light: #e7ecf0;
-  --primary-color: #5b5fc7;
-  --primary-hover: #4a4db3;
-  --accent-color: #0891b2;
-  --success-color: #059669;
-  --warning-color: #d97706;
-  --error-color: #dc2626;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.18);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.22);
-
-  color-scheme: light;
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
-}
-
-html {
-  height: 100%;
-  overflow-y: auto;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
+img {
+  max-width: 100%;
   height: auto;
-  overflow-x: clip;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-#root {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-/* Smooth transitions globally */
-* {
-  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
-}
-
-*:focus-visible {
-  outline: 2px solid var(--primary-color);
+:focus-visible {
+  outline: 3px solid var(--yellow);
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
-.logo {
-    font-family: 'Orbitron', monospace;
-    font-size: 3rem;
-    font-weight: 300;
-    color: #fff;
-    text-shadow: 0 0 20px #a855f7, 0 0 40px #a855f7;
-    letter-spacing: 2px;
-}
-
-.logo a {
-    color: inherit;
-    text-decoration: none;
-    transition: all 0.3s ease;
-}
-
-.logo a:hover {
-    text-shadow: 0 0 30px #06b6d4, 0 0 60px #06b6d4;
-    transform: scale(1.05);
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+@media (max-width: 767px) {
+  /* 16px stops iOS zooming into a field on focus. */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+}
+
+/* The error screen, shown when a page crashes. */
+
+.crash {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px;
+}
+
+.crash .empty {
+  width: min(560px, 100%);
+  background: var(--surface);
+  box-shadow: 8px 8px 0 var(--tomato);
+}
+
+.crash pre {
+  max-height: 240px;
+  overflow: auto;
+  font: 0.8125rem var(--font-mono);
+  white-space: pre-wrap;
+}
+
+.crash-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
 }

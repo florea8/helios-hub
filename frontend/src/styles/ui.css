@@ -1,8 +1,4 @@
-/*
- * Shared building blocks for every page, built on tokens.css.
- * Hover states are spelled out because index.css still styles bare `button`
- * elements, and `button:hover` would otherwise outrank a single class.
- */
+/* Shared building blocks for every page, built on tokens.css. */
 
 .paper {
   color: var(--ink);
@@ -341,8 +337,8 @@
   }
 }
 
-/* Plain defaults for elements on the new pages. :where keeps these weightless,
-   so any class above or below wins without a fight. */
+/* Browser defaults reset for buttons, links and headings. :where keeps these
+   weightless, so any class above or below wins without a fight. */
 
 :where(.paper) :is(button, input, textarea) {
   font: inherit;

@@ -5,8 +5,6 @@ import { SocketProvider } from './context/SocketContext';
 import { NotificationProvider } from './context/NotificationContext';
 import NotificationToast from './components/NotificationToast';
 import LoadingSkeleton from './components/LoadingSkeleton';
-import './styles/animations.css';
-import './styles/responsive.css';
 
 // Eager load critical pages (authentication flow)
 import Home from './pages/Home';
@@ -18,8 +16,6 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Rooms = lazy(() => import('./pages/Rooms'));
 const Friends = lazy(() => import('./pages/Friends'));
 const Profile = lazy(() => import('./pages/Profile'));
-const UserProfile = lazy(() => import('./pages/UserProfile'));
-const Settings = lazy(() => import('./pages/Settings'));
 
 // Each page opens at the top instead of keeping the previous page's scroll.
 function ScrollToTop() {
@@ -46,8 +42,7 @@ function App() {
                 <Route path="/home" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/profile/:userId" element={<UserProfile />} />
-                <Route path="/settings" element={<Settings />} />
+                <Route path="/profile/:userId" element={<Profile />} />
                 <Route path="/rooms" element={<Rooms />} />
                 <Route path="/friends" element={<Friends />} />
               </Routes>

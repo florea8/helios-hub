@@ -3,123 +3,50 @@ import React from 'react';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error) {
+    return { error };
   }
 
   componentDidCatch(error, errorInfo) {
-    this.setState({
-      error,
-      errorInfo
-    });
-    
-    // Log error to console in development
+    this.setState({ errorInfo });
     if (import.meta.env.DEV) {
       console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
   }
 
   render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'var(--bg-primary)',
-          padding: '20px'
-        }}>
-          <div style={{
-            maxWidth: '600px',
-            width: '100%',
-            background: 'var(--bg-secondary)',
-            borderRadius: '12px',
-            padding: '32px',
-            border: '1px solid var(--border-color)',
-            backdropFilter: 'blur(10px)',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              fontSize: '48px',
-              marginBottom: '16px'
-            }}>!</div>
-            
-            <h1 style={{
-              color: 'var(--text-primary)',
-              fontSize: '24px',
-              marginBottom: '8px',
-              fontWeight: '600'
-            }}>
-              Oops! Something went wrong
-            </h1>
-            
-            <p style={{
-              color: 'var(--text-secondary)',
-              marginBottom: '24px'
-            }}>
-              We're sorry for the inconvenience. The application encountered an unexpected error.
-            </p>
+    const { error, errorInfo } = this.state;
+    if (!error) return this.props.children;
 
-            {import.meta.env.DEV && this.state.error && (
-              <details style={{
-                marginTop: '24px',
-                textAlign: 'left',
-                background: 'var(--bg-tertiary)',
-                padding: '16px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color)'
-              }}>
-                <summary style={{
-                  color: 'var(--text-primary)',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  marginBottom: '12px'
-                }}>
-                  Error Details (Development Only)
-                </summary>
-                <pre style={{
-                  color: 'var(--error-color)',
-                  fontSize: '14px',
-                  overflow: 'auto',
-                  margin: 0,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word'
-                }}>
-                  {this.state.error.toString()}
-                  {this.state.errorInfo && this.state.errorInfo.componentStack}
-                </pre>
-              </details>
-            )}
-
-            <button
-              onClick={() => window.location.href = '/'}
-              style={{
-                marginTop: '24px',
-                padding: '12px 24px',
-                background: 'var(--primary-color)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-              onMouseOver={(e) => e.target.style.background = 'var(--primary-hover)'}
-              onMouseOut={(e) => e.target.style.background = 'var(--primary-color)'}
-            >
-              Go to Homepage
+    return (
+      <div className="crash paper">
+        <div className="empty">
+          <span className="label">Something broke</span>
+          <h3>This page hit an error</h3>
+          <p>Reload to try again. If it keeps happening, go back to the start page.</p>
+          {import.meta.env.DEV && (
+            <details>
+              <summary className="label">Error details (shown in development only)</summary>
+              <pre>
+                {error.toString()}
+                {errorInfo?.componentStack}
+              </pre>
+            </details>
+          )}
+          <div className="crash-actions">
+            <button type="button" className="button button-primary" onClick={() => window.location.reload()}>
+              Reload
             </button>
+            <a href="/" className="button">
+              Start page
+            </a>
           </div>
         </div>
-      );
-    }
-
-    return this.props.children;
+      </div>
+    );
   }
 }
 
