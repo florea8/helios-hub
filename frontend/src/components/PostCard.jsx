@@ -2,10 +2,8 @@ import { Link } from 'react-router-dom';
 import { fileUrl } from '../services/api';
 import Avatar from './Avatar';
 import InterestTag from './InterestTag';
+import { formatDate } from '../utils/time';
 import '../styles/Post.css';
-
-const formatDate = (date) =>
-  new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 const PostCard = ({ post, onLike = null }) => (
   <article className="post">

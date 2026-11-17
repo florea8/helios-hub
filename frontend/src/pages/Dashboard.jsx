@@ -15,18 +15,10 @@ import LoadingSkeleton from '../components/LoadingSkeleton';
 import TagPicker from '../components/TagPicker';
 import InterestTag from '../components/InterestTag';
 import { tagStyle } from '../interests';
+import { lastSeen } from '../utils/time';
 import '../styles/Dashboard.css';
 
 const PAGE_SIZE = 10;
-
-const timeSince = (lastSeen) => {
-  if (!lastSeen) return 'Offline';
-  const seconds = Math.floor((Date.now() - new Date(lastSeen)) / 1000);
-  if (seconds < 60) return 'Just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return `${Math.floor(seconds / 86400)}d ago`;
-};
 
 const EMPTY_DRAFT = { title: '', description: '', image: null, tags: [] };
 const MAX_TAGS = 3;
@@ -344,7 +336,7 @@ const Dashboard = () => {
               <UserListItem
                 key={friend.id}
                 user={friend}
-                subtitle={isUserOnline(friend.id) ? 'Online' : timeSince(friend.last_seen)}
+                subtitle={isUserOnline(friend.id) ? 'online' : lastSeen(friend.last_seen)}
                 isOnline={isUserOnline(friend.id)}
                 isActive={chatFriend?.id === friend.id}
                 onClick={() => openChat(friend)}

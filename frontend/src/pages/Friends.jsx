@@ -10,16 +10,8 @@ import UserListItem from '../components/UserListItem';
 import ChatWindow from '../components/ChatWindow';
 import EmptyState from '../components/EmptyState';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import { lastSeen } from '../utils/time';
 import '../styles/Friends.css';
-
-const timeSince = (lastSeen) => {
-  if (!lastSeen) return 'Offline';
-  const seconds = Math.floor((Date.now() - new Date(lastSeen)) / 1000);
-  if (seconds < 60) return 'Just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return `${Math.floor(seconds / 86400)}d ago`;
-};
 
 // What the search result button says and does for each friendship state.
 const SEARCH_ACTION = {
@@ -182,7 +174,7 @@ export default function Friends() {
                   <UserListItem
                     key={friend.id}
                     user={friend}
-                    subtitle={isUserOnline(friend.id) ? 'Online' : timeSince(friend.last_seen)}
+                    subtitle={isUserOnline(friend.id) ? 'online' : lastSeen(friend.last_seen)}
                     isOnline={isUserOnline(friend.id)}
                     isActive={chatFriend?.id === friend.id}
                     onClick={() => openChat(friend)}
@@ -280,7 +272,7 @@ export default function Friends() {
                       <UserListItem
                         key={person.id}
                         user={person}
-                        subtitle={timeSince(person.last_seen)}
+                        subtitle={isUserOnline(person.id) ? 'online' : lastSeen(person.last_seen)}
                         actions={
                           <button
                             type="button"

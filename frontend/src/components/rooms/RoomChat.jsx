@@ -4,14 +4,12 @@ import api, { errorMessage, fileUrl } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../hooks/useSocket';
 import Avatar from '../Avatar';
+import { formatDateTime } from '../../utils/time';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 const formatSize = (bytes) =>
   bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-
-const formatTime = (date) =>
-  new Date(date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 const downloadUrl = (message) => fileUrl(`api/messages/download/${message.file_path.split('/').pop()}`);
 
@@ -95,7 +93,7 @@ const RoomChat = ({ room, messages, setMessages, onError }) => {
               <div>
                 <p className="label">
                   {bot ? 'Assistant' : <Link to={`/profile/${message.user_id}`}>{message.username}</Link>} ·{' '}
-                  {formatTime(message.created_at)}
+                  {formatDateTime(message.created_at)}
                 </p>
                 {message.content && <p>{message.content}</p>}
                 {message.file_name && <Attachment message={message} />}

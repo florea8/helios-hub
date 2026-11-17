@@ -3,14 +3,15 @@ import { Link } from 'react-router-dom';
 import api, { errorMessage } from '../../services/api';
 import Avatar from '../Avatar';
 import Dialog from '../Dialog';
+import { formatDate, today as localToday } from '../../utils/time';
 
 const EMPTY_TASK = { title: '', description: '', start_date: '', end_date: '', priority: 'NORMAL' };
-const shortDate = (date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+const shortDate = (date) => formatDate(date, { month: 'short', day: 'numeric' });
 
 function Tasks({ room, tasks, setTasks, onError }) {
   const [editing, setEditing] = useState(null); // null, 'new', or the task being edited
   const [form, setForm] = useState(EMPTY_TASK);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localToday();
   const done = tasks.filter((task) => task.status === 'DONE').length;
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
+import { timeAgo } from '../utils/time';
 import '../styles/NotificationPanel.css';
 
 const NotificationPanel = () => {
@@ -142,17 +143,6 @@ const NotificationPanel = () => {
     ? persistentNotifications.filter(n => !n.read)
     : persistentNotifications;
 
-  const formatTimeAgo = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now - date) / 1000);
-
-    if (seconds < 60) return 'just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-    return date.toLocaleDateString();
-  };
 
   return (
     <div className="notification-panel" ref={panelRef}>
@@ -217,7 +207,7 @@ const NotificationPanel = () => {
                   <div className="notification-content">
                     <div className="notification-title">{notification.title}</div>
                     <div className="notification-message">{notification.message}</div>
-                    <div className="notification-time">{formatTimeAgo(notification.created_at)}</div>
+                    <div className="notification-time">{timeAgo(notification.created_at)}</div>
                   </div>
                   <div className="notification-actions">
                     {!notification.read && (

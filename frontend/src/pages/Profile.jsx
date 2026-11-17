@@ -10,6 +10,7 @@ import TagPicker from '../components/TagPicker';
 import PostCard from '../components/PostCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import { formatDate } from '../utils/time';
 import '../styles/Profile.css';
 
 const LINKS = [
@@ -156,7 +157,7 @@ const Profile = () => {
   };
 
   const links = profile ? LINKS.filter(([key]) => profile[key]) : [];
-  const joined = profile && new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const joined = profile && formatDate(profile.created_at, { month: 'long', year: 'numeric' });
   const field = (key) => ({ value: form[key], onChange: (e) => setForm({ ...form, [key]: e.target.value }) });
 
   return (
