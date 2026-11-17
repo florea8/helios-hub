@@ -49,25 +49,14 @@
 }
 
 /* Cards and items */
-.room-card,
 .friends-list-item {
   animation: fadeIn 0.3s ease-out backwards;
 }
 
-.room-card:nth-child(1) { animation-delay: 0.05s; }
-.room-card:nth-child(2) { animation-delay: 0.1s; }
-.room-card:nth-child(3) { animation-delay: 0.15s; }
-
 /* Hover animations */
-.room-card,
 .btn,
 button {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.room-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
 }
 
 /* Focus animations */
@@ -81,13 +70,6 @@ button {
   }
   50% {
     opacity: 0.8;
-  }
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .room-card {
-    animation-delay: 0s !important;
   }
 }
 

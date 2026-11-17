@@ -97,14 +97,6 @@ select {
   }
 }
 
-/* Mobile-friendly modals */
-@media (max-width: 767px) {
-  
-  .modal-content {
-    padding: 1rem;
-  }
-}
-
 /* Responsive images */
 img {
   max-width: 100%;
