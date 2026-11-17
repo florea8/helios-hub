@@ -123,22 +123,18 @@ exports.getMessagesForRoom = async (req, res) => {
 
 // DOWNLOAD FILE
 exports.downloadFile = async (req, res) => {
-  const { filename } = req.params;
+  // basename drops any folders in the name, so a request like ../../.env cannot leave the upload folder.
+  const filename = path.basename(req.params.filename);
   const filePath = path.join(__dirname, '..', 'uploads', 'room-files', filename);
 
   try {
-    if (!fs.existsSync(filePath)) {
+    // Only files that were sent in a room can be downloaded.
+    const message = db.prepare('SELECT file_name FROM messages WHERE file_path = ?').get('uploads/room-files/' + filename);
+    if (!message || !fs.existsSync(filePath)) {
       return res.status(404).json({ message: 'File not found' });
     }
 
-    // Get original filename from database
-    const stmt = db.prepare('SELECT file_name FROM messages WHERE file_path = ?');
-    const result = stmt.get('uploads/room-files/' + filename);
-
-    const originalName = result?.file_name || filename;
-    
-    res.setHeader('Content-Disposition', `attachment; filename="${originalName}"`);
-    res.sendFile(filePath);
+    res.download(filePath, message.file_name);
   } catch (err) {
     console.error('Download error:', err);
     res.status(500).json({ message: 'Download error' });
