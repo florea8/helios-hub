@@ -1,6 +1,7 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const { allowedOrigins } = require('../config/settings');
 const notificationsController = require('../controllers/notifications');
 const { startDeadlineChecker } = require('../utils/deadlineChecker');
 
@@ -14,7 +15,7 @@ let ioInstance = null;
 function initializeSocket(server) {
   const io = new Server(server, {
     cors: {
-      origin: ["http://localhost:5173", "http://localhost:5174"],
+      origin: allowedOrigins,
       methods: ["GET", "POST"],
       credentials: true
     }

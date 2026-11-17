@@ -2,12 +2,12 @@ const db = require('../config/db');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { uploadDir } = require('../config/settings');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = path.join(__dirname, '..', 'uploads', 'room-files');
-    cb(null, dir);
+    cb(null, path.join(uploadDir, 'room-files'));
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -125,7 +125,7 @@ exports.getMessagesForRoom = async (req, res) => {
 exports.downloadFile = async (req, res) => {
   // basename drops any folders in the name, so a request like ../../.env cannot leave the upload folder.
   const filename = path.basename(req.params.filename);
-  const filePath = path.join(__dirname, '..', 'uploads', 'room-files', filename);
+  const filePath = path.join(uploadDir, 'room-files', filename);
 
   try {
     // Only files that were sent in a room can be downloaded.

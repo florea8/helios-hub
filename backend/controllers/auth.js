@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { AppError, asyncHandler } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
+const { uploadDir, uploadPath } = require('../config/settings');
 const { interestsOf, setInterests } = require('../utils/interests');
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -104,17 +105,12 @@ exports.uploadProfilePicture = async (req, res) => {
     // Get file extension
     const ext = mimeType.split('/')[1].split(';')[0];
     const filename = `${userId}-${Date.now()}.${ext}`;
-    const uploadsDir = path.join(__dirname, '..', 'uploads', 'profiles');
-
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
+    const uploadsDir = path.join(uploadDir, 'profiles');
 
     // Delete old profile picture if exists
     const oldUser = db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(userId);
     if (oldUser && oldUser.profile_picture) {
-      const oldPath = path.join(__dirname, '..', oldUser.profile_picture);
+      const oldPath = uploadPath(oldUser.profile_picture);
       if (fs.existsSync(oldPath)) {
         fs.unlinkSync(oldPath);
       }

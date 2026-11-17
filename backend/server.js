@@ -6,6 +6,7 @@ const fs = require('fs');
 require('dotenv').config();
 
 const db = require('./config/db');
+const { allowedOrigins, uploadDir } = require('./config/settings');
 const initializeSocket = require('./socket');
 
 db.exec(`
@@ -409,9 +410,12 @@ const notificationsRoutes = require('./routes/notifications_routes');
 
 const app = express();
 
-// CORS configuration
+// Behind a hosting proxy the visitor's address is in X-Forwarded-For. Trusting that one hop lets the
+// rate limiter tell visitors apart; without it everyone shares the proxy's address and one limit.
+if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
+
 app.use(cors({
-  origin: process.env.CORS_ORIGINS?.split(',') || 'http://localhost:5173',
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -420,20 +424,11 @@ app.use(cors({
 
 app.use(express.json({ limit: '50mb' }));
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'uploads', 'profiles');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+for (const folder of ['profiles', 'room-files']) {
+  fs.mkdirSync(path.join(uploadDir, folder), { recursive: true });
 }
 
-// Ensure room files directory exists
-const roomFilesDir = path.join(__dirname, 'uploads', 'room-files');
-if (!fs.existsSync(roomFilesDir)) {
-  fs.mkdirSync(roomFilesDir, { recursive: true });
-}
-
-// Serve static files from uploads directory
-app.use('/uploads', cors(), express.static(path.join(__dirname, 'uploads'), {
+app.use('/uploads', cors(), express.static(uploadDir, {
   setHeaders: (res, filePath) => {
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     res.setHeader('Access-Control-Allow-Origin', '*');
