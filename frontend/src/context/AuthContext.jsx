@@ -34,6 +34,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // A 401 on a request that carried a token means the session is over (expired, or the account is gone).
+  // Signing out sends the person to the login page instead of leaving them on pages that all fail.
+  useEffect(() => {
+    const id = api.interceptors.response.use(
+      (res) => res,
+      (err) => {
+        if (err.response?.status === 401 && err.config?.headers?.Authorization) {
+          localStorage.removeItem('token');
+          setUser(null);
+        }
+        return Promise.reject(err);
+      }
+    );
+    return () => api.interceptors.response.eject(id);
+  }, []);
+
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
@@ -41,11 +57,8 @@ export const AuthProvider = ({ children }) => {
         const decoded = decodeToken(token);
         if (decoded) {
           const profile = await fetchUserProfile();
-          if (profile) {
-            setUser({ token, ...decoded, ...profile });
-          } else {
-            setUser({ token, ...decoded });
-          }
+          // Gone means the server rejected the token and the interceptor signed out.
+          if (localStorage.getItem('token')) setUser({ token, ...decoded, ...profile });
         } else {
           localStorage.removeItem('token');
         }
