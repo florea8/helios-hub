@@ -19,15 +19,14 @@ exports.authenticate = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // { id, role }
-    
-    // Update last_seen timestamp
-    try {
-      db.prepare("UPDATE users SET last_seen = datetime('now') WHERE id = ?").run(decoded.id);
-    } catch (error) {
-      console.error('Error updating last_seen:', error);
-    }
-    
+    // The token holds only id and role; the same write that records last_seen returns the name,
+    // and returns nothing for an account that no longer exists.
+    const account = db
+      .prepare("UPDATE users SET last_seen = datetime('now') WHERE id = ? RETURNING username")
+      .get(decoded.id);
+    if (!account) return next(new AppError('Token invalid sau expirat', 401));
+
+    req.user = { ...decoded, username: account.username };
     next();
   } catch (err) {
     return next(new AppError('Token invalid sau expirat', 401));

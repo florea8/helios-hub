@@ -1,5 +1,22 @@
 const Joi = require('joi');
 
+// A due date before the start date makes no sense on a task.
+const dueAfterStart = (value, helpers) =>
+  value < helpers.state.ancestors[0].start_date ? helpers.message('The due date cannot be before the start date') : value;
+
+const day = Joi.string()
+  .pattern(/^\d{4}-\d{2}-\d{2}$/)
+  .required()
+  .messages({ 'string.pattern.base': 'Dates must look like 2026-11-20', 'any.required': 'Pick a start and a due date' });
+
+const taskFields = {
+  title: Joi.string().trim().min(1).max(200).required().messages({ 'string.empty': 'Give the task a title' }),
+  description: Joi.string().max(2000).allow('', null),
+  start_date: day,
+  end_date: day.custom(dueAfterStart),
+  priority: Joi.string().valid('LOW', 'NORMAL', 'HIGH').default('NORMAL')
+};
+
 // Validation schemas
 const schemas = {
   // Auth schemas
@@ -41,6 +58,17 @@ const schemas = {
   // Comment schema
   addComment: Joi.object({
     content: Joi.string().min(1).max(1000).required()
+  }),
+
+  createTask: Joi.object(taskFields),
+
+  updateTask: Joi.object({
+    ...taskFields,
+    status: Joi.string().valid('PENDING', 'DONE').required()
+  }),
+
+  toggleTask: Joi.object({
+    status: Joi.string().valid('PENDING', 'DONE').required()
   }),
 
   setInterests: Joi.object({
