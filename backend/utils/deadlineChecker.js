@@ -8,7 +8,8 @@ const setSocketInstance = (io) => {
   ioInstance = io;
 };
 
-// Check for upcoming task deadlines
+// Check for upcoming task deadlines.
+// end_date is a day (YYYY-MM-DD), so a task is due at the end of that day: datetime(end_date, '+1 day').
 const checkTaskDeadlines = () => {
   try {
     // Get tasks with deadlines in the next 24 hours that haven't been completed
@@ -31,8 +32,8 @@ const checkTaskDeadlines = () => {
       JOIN room_members rm ON r.id = rm.room_id
       JOIN users u ON rm.user_id = u.id
       WHERE rt.status = 'PENDING'
-      AND datetime(rt.end_date) > datetime('now')
-      AND datetime(rt.end_date) <= datetime('now', '+24 hours')
+      AND datetime(rt.end_date, '+1 day') > datetime('now')
+      AND datetime(rt.end_date, '+1 day') <= datetime('now', '+24 hours')
       AND NOT EXISTS (
         SELECT 1 FROM notifications n
         WHERE n.user_id = rm.user_id
@@ -79,8 +80,8 @@ const checkTaskDeadlines = () => {
       JOIN room_members rm ON r.id = rm.room_id
       JOIN users u ON rm.user_id = u.id
       WHERE rt.status = 'PENDING'
-      AND datetime(rt.end_date) > datetime('now')
-      AND datetime(rt.end_date) <= datetime('now', '+1 hour')
+      AND datetime(rt.end_date, '+1 day') > datetime('now')
+      AND datetime(rt.end_date, '+1 day') <= datetime('now', '+1 hour')
       AND NOT EXISTS (
         SELECT 1 FROM notifications n
         WHERE n.user_id = rm.user_id
