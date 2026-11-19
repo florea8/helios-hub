@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { announceRoomMessage } = require('../utils/roomMessages');
 const axios = require('axios');
 
 // API configuration
@@ -168,6 +169,7 @@ exports.handleChatbotMessage = async (req, res) => {
     `);
     const message = msgStmt.get(result.lastInsertRowid);
 
+    announceRoomMessage(message);
     res.status(201).json({
       botMessage: message,
       originalMessage: content

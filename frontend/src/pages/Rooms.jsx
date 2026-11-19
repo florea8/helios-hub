@@ -25,7 +25,7 @@ const Rooms = () => {
   const [tasks, setTasks] = useState([]);
   const [error, setError] = useState('');
   const [draft, setDraft] = useState(null); // new-room form, null while closed
-  const voice = useVoiceChat(socket, roomId, user);
+  const voice = useVoiceChat(socket, roomId);
   const fail = useCallback((fallback) => (err) => setError(errorMessage(err, fallback)), []);
 
   useEffect(() => {
@@ -83,7 +83,9 @@ const Rooms = () => {
 
   useEffect(() => {
     if (!socket || !roomId) return;
-    const onMessage = (message) => message.room_id === roomId && setMessages((prev) => [...prev, message]);
+    const onMessage = (message) =>
+      message.room_id === roomId &&
+      setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
     const onMusic = (payload) => Number(payload.roomId) === roomId && setRoom((prev) => prev && { ...prev, ...payload });
     const onSettings = ({ roomId: id, description, rules }) =>
       Number(id) === roomId && setRoom((prev) => prev && { ...prev, description, rules });

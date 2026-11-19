@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { uploadDir } = require('../config/settings');
+const { announceRoomMessage } = require('../utils/roomMessages');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -78,6 +79,7 @@ exports.sendMessage = async (req, res) => {
     `);
     const message = msgStmt.get(result.lastInsertRowid);
 
+    announceRoomMessage(message);
     res.status(201).json(message);
   } catch (err) {
     console.error('Send message error:', err);

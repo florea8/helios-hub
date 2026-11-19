@@ -5,7 +5,7 @@ const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'st
 const SPEAKING_LEVEL = 30;
 
 // Peer-to-peer voice for one room. Signalling goes through the room's socket.
-export function useVoiceChat(socket, roomId, user) {
+export function useVoiceChat(socket, roomId) {
   const [active, setActive] = useState(false);
   const [muted, setMuted] = useState(false);
   const [others, setOthers] = useState([]);
@@ -85,7 +85,7 @@ export function useVoiceChat(socket, roomId, user) {
     stream.current = await navigator.mediaDevices.getUserMedia({ audio: true });
     meter('self', stream.current);
     setActive(true);
-    socket.emit('voice-join-room', { roomId, username: user.username, profilePicture: user.profile_picture });
+    socket.emit('voice-join-room', { roomId });
   };
 
   const toggleMute = () => {

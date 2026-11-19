@@ -5,9 +5,8 @@ const { allowedOrigins } = require('../config/settings');
 const notificationsController = require('../controllers/notifications');
 const { startDeadlineChecker } = require('../utils/deadlineChecker');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'unsecretfoarteputernic123!';
+const JWT_SECRET = process.env.JWT_SECRET;
 
-// Map pentru tracking users online: userId -> socketId
 // userId -> ids of that user's open sockets. Someone with two tabs stays online until both close.
 const onlineUsers = new Map();
 let ioInstance = null;
@@ -120,96 +119,30 @@ function initializeSocket(server) {
     });
 
     // Room events
+    const isMember = (roomId) =>
+      Boolean(db.prepare('SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?').get(roomId, userId));
+
+    // Only members hear a room's live messages.
     socket.on('join-room', (roomId) => {
-      socket.join(`room_${roomId}`);
-      console.log(`User ${userId} joined room ${roomId}`);
+      if (isMember(roomId)) socket.join(`room_${roomId}`);
     });
 
     socket.on('leave-room', (roomId) => {
       socket.leave(`room_${roomId}`);
-      console.log(`User ${userId} left room ${roomId}`);
-    });
-
-    socket.on('room-message', (message) => {
-      // Check for @mentions in the message
-      const mentionRegex = /@(\w+)/g;
-      const mentions = [];
-      let match;
-      
-      while ((match = mentionRegex.exec(message.content)) !== null) {
-        mentions.push(match[1]); // Extract username without @
-      }
-
-      // Get room info
-      const roomStmt = db.prepare('SELECT name FROM rooms WHERE id = ?');
-      const room = roomStmt.get(message.room_id);
-
-      // Get sender info
-      const senderStmt = db.prepare('SELECT username FROM users WHERE id = ?');
-      const sender = senderStmt.get(message.user_id);
-
-      // Process mentions
-      if (mentions.length > 0) {
-        mentions.forEach(mentionedUsername => {
-          // Get mentioned user
-          const userStmt = db.prepare('SELECT id FROM users WHERE username = ?');
-          const mentionedUser = userStmt.get(mentionedUsername);
-
-          if (mentionedUser && mentionedUser.id !== message.user_id) {
-            // Create notification
-            const notifId = notificationsController.createNotification(
-              mentionedUser.id,
-              'MENTION',
-              'You were mentioned',
-              `${sender?.username || 'Someone'} mentioned you in ${room?.name || 'a room'}`,
-              `/rooms?roomId=${message.room_id}`,
-              message.user_id,
-              message.id
-            );
-
-            // Send real-time notification
-            if (notifId) {
-              io.to(`user-${mentionedUser.id}`).emit('new_notification', {
-                id: notifId,
-                type: 'MENTION',
-                title: 'You were mentioned',
-                message: `${sender?.username || 'Someone'} mentioned you in ${room?.name || 'a room'}`,
-                link: `/rooms?roomId=${message.room_id}`,
-                related_username: sender?.username,
-                created_at: new Date().toISOString()
-              });
-            }
-          }
-        });
-      }
-
-      // Broadcast message to all users in the room except sender
-      socket.to(`room_${message.room_id}`).emit('room-message', message);
-    });
-
-    socket.on('room-typing', (data) => {
-      const { roomId } = data;
-      socket.to(`room_${roomId}`).emit('room-typing', { userId, username: data.username });
-    });
-
-    socket.on('room-stop-typing', (data) => {
-      const { roomId } = data;
-      socket.to(`room_${roomId}`).emit('room-stop-typing', { userId });
     });
 
     // Voice chat WebRTC signaling events
     socket.on('voice-join-room', (data) => {
       const { roomId } = data;
-      console.log(`User ${userId} joining voice chat in room ${roomId}`);
-      
-      // Join voice channel
+      if (!isMember(roomId)) return;
       socket.join(`voice_${roomId}`);
-      
-      // Notify others in the room that a new user joined voice
+
+      // The name others see comes from the database, not from the client.
+      const me = db.prepare('SELECT username, profile_picture FROM users WHERE id = ?').get(userId);
       socket.to(`voice_${roomId}`).emit('voice-user-joined', {
         userId,
-        username: data.username,
-        profilePicture: data.profilePicture
+        username: me.username,
+        profilePicture: me.profile_picture
       });
     });
 

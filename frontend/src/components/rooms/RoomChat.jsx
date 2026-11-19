@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api, { errorMessage, fileUrl } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { useSocket } from '../../hooks/useSocket';
 import Avatar from '../Avatar';
 import { formatDateTime } from '../../utils/time';
 
@@ -28,7 +27,6 @@ const Attachment = ({ message }) =>
 
 const RoomChat = ({ room, messages, setMessages, onError }) => {
   const { user } = useAuth();
-  const { socket } = useSocket();
   const [text, setText] = useState('');
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -39,10 +37,8 @@ const RoomChat = ({ room, messages, setMessages, onError }) => {
     listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages, asking]);
 
-  const publish = (message) => {
-    setMessages((prev) => [...prev, message]);
-    socket?.emit('room-message', message);
-  };
+  // The server also sends this message to the room, so it may already be on screen.
+  const publish = (message) => setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
 
   const send = async (askAssistant) => {
     const content = text.trim();
