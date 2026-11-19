@@ -237,7 +237,6 @@ exports.getRoomMembers = async (req, res) => {
       SELECT 
         u.id,
         u.username,
-        u.email,
         u.profile_picture,
         rm.joined_at,
         rm.role
