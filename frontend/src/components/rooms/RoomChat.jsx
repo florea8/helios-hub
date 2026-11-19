@@ -82,7 +82,8 @@ const RoomChat = ({ room, messages, setMessages, onError }) => {
       <ul className="room-messages" ref={listRef}>
         {messages.length === 0 && <li className="room-quiet">No messages yet. Say hello.</li>}
         {messages.map((message) => {
-          const bot = message.user_id === 0 || message.username === 'HeliosBot';
+          // The assistant is user 0; going by name would let anyone named like it pass for it.
+          const bot = message.user_id === 0;
           return (
             <li key={message.id} data-me={message.user_id === user.id || undefined} data-bot={bot || undefined}>
               {bot ? <span className="avatar" style={{ '--size': '36px' }}>AI</span> : <Avatar user={message} size={36} />}

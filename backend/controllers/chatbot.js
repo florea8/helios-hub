@@ -11,7 +11,7 @@ const generateSimpleResponse = (message) => {
   const lowercaseMessage = message.toLowerCase();
 
   if (lowercaseMessage.match(/\b(salut|hello|hi|hey|buna|bună)\b/)) {
-    return "👋 Salut! Sunt HeliosBot, asistentul virtual al acestui room. Cum te pot ajuta?";
+    return "👋 Salut! Sunt Helios assistant, asistentul virtual al acestui room. Cum te pot ajuta?";
   }
 
   if (lowercaseMessage.match(/\b(ajutor|help|ce poti|ce poți)\b/)) {
@@ -57,7 +57,7 @@ const generateAIResponse = async (message, conversationHistory = []) => {
       const messages = [
         {
           role: 'system',
-          content: `Tu ești HeliosBot, un asistent AI integrat într-o platformă de colaborare numită Helios. 
+          content: `Tu ești Helios assistant, un asistent AI integrat într-o platformă de colaborare numită Helios. 
 Ajuți utilizatorii cu întrebări despre funcționalități (rooms, tasks, colaborare), productivitate și lucrul în echipă.
 Răspunde prietenos, concis și util. Folosește emoji-uri. Răspunde în limba întrebării (română sau engleză).`
         },
@@ -142,20 +142,7 @@ exports.handleChatbotMessage = async (req, res) => {
     // Generate AI response using Groq
     const botResponse = await generateAIResponse(content, conversationHistory);
 
-    // Create bot user if doesn't exist (id: 0, special bot user)
-    const botUserCheck = db.prepare('SELECT * FROM users WHERE id = 0');
-    let botUser = botUserCheck.get();
-
-    if (!botUser) {
-      // Create bot user
-      const createBot = db.prepare(`
-        INSERT INTO users (id, username, email, password_hash, profile_picture) 
-        VALUES (0, 'HeliosBot', 'bot@helios.com', 'NO_PASSWORD', NULL)
-      `);
-      createBot.run();
-      botUser = { id: 0, username: 'HeliosBot', profile_picture: null };
-    }
-
+    // The assistant's account (user 0) is created at startup.
     // Insert bot message
     const stmt = db.prepare('INSERT INTO messages (room_id, user_id, content) VALUES (?, ?, ?)');
     const result = stmt.run(roomId, 0, botResponse);

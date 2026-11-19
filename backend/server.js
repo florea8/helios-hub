@@ -227,6 +227,14 @@ try {
   // Column already exists
 }
 
+// The room assistant posts as user 0. Its name has a space and its address a reserved domain,
+// so nobody can register either one and pass for the assistant. An older install named it HeliosBot.
+db.prepare(`
+  INSERT INTO users (id, username, email, password_hash)
+  VALUES (0, 'Helios assistant', 'assistant@helios.invalid', 'NO_PASSWORD')
+  ON CONFLICT(id) DO UPDATE SET username = excluded.username, email = excluded.email
+`).run();
+
 // Migration: posts carry a type and an optional image. These were once added on the first post,
 // so a new database had neither column until someone posted.
 for (const column of ["post_type TEXT DEFAULT 'standard'", 'image TEXT']) {

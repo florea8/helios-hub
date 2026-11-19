@@ -335,7 +335,7 @@ exports.searchUsers = (req, res) => {
     const users = db.prepare(`
       SELECT id, username, profile_picture, last_seen
       FROM users
-      WHERE id != ? AND username LIKE ?
+      WHERE id != ? AND id != 0 AND username LIKE ?
       ORDER BY username
       LIMIT 20
     `).all(userId, `%${query}%`);
