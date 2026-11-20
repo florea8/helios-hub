@@ -75,33 +75,6 @@ exports.getAllRooms = async (req, res) => {
   }
 };
 
-// GET ROOMS FOR POST
-exports.getRoomsForPost = async (req, res) => {
-  const { postId } = req.params;
-
-  try {
-    const stmt = db.prepare(`
-      SELECT 
-        r.*,
-        u.username as creator_username,
-        u.profile_picture as creator_profile_picture,
-        mu.username as music_added_by_username,
-        (SELECT COUNT(*) FROM room_members WHERE room_id = r.id) as member_count
-      FROM rooms r
-      JOIN users u ON r.created_by = u.id
-      LEFT JOIN users mu ON r.music_added_by = mu.id
-      WHERE r.post_id = ?
-      ORDER BY r.created_at ASC
-    `);
-    const rows = stmt.all(postId);
-
-    res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'DB error' });
-  }
-};
-
 // GET ROOM BY ID
 exports.getRoomById = async (req, res) => {
   const { id } = req.params;
@@ -458,18 +431,6 @@ exports.updateMemberRole = async (req, res) => {
     `);
     const updatedMember = memberStmt.get(id, memberId);
 
-    // Broadcast update
-    try {
-      const io = getIO();
-      io.to(`room_${id}`).emit('member-role-update', {
-        roomId: Number(id),
-        userId: Number(memberId),
-        role
-      });
-    } catch (socketErr) {
-      console.error('Error emitting member-role-update:', socketErr.message);
-    }
-
     res.json({ message: 'Member role updated', member: updatedMember });
   } catch (err) {
     console.error('Error updating member role:', err);
@@ -519,16 +480,12 @@ exports.removeMember = async (req, res) => {
     // Broadcast removal
     try {
       const io = getIO();
-      io.to(`room_${id}`).emit('member-removed', {
-        roomId: Number(id),
-        userId: Number(memberId)
-      });
       // Notify removed user
       io.to(`user-${memberId}`).emit('removed-from-room', {
         roomId: Number(id)
       });
     } catch (socketErr) {
-      console.error('Error emitting member-removed:', socketErr.message);
+      console.error('Error emitting removed-from-room:', socketErr.message);
     }
 
     res.json({ message: 'Member removed successfully' });
@@ -575,18 +532,6 @@ exports.transferOwnership = async (req, res) => {
 
     const updateNewOwner = db.prepare('UPDATE room_members SET role = ? WHERE room_id = ? AND user_id = ?');
     updateNewOwner.run('admin', id, newOwnerId);
-
-    // Broadcast ownership transfer
-    try {
-      const io = getIO();
-      io.to(`room_${id}`).emit('ownership-transferred', {
-        roomId: Number(id),
-        oldOwnerId: userId,
-        newOwnerId: Number(newOwnerId)
-      });
-    } catch (socketErr) {
-      console.error('Error emitting ownership-transferred:', socketErr.message);
-    }
 
     res.json({ message: 'Ownership transferred successfully' });
   } catch (err) {

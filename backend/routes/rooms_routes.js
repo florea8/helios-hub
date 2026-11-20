@@ -7,7 +7,6 @@ const { requireRoomMember } = require('../middleware/roomAccess');
 
 router.get('/', roomsController.getAllRooms);
 router.post('/', authenticate, validate('createRoom'), roomsController.createRoom);
-router.get('/post/:postId', validateId('postId'), roomsController.getRoomsForPost);
 router.get('/:id', validateId(), roomsController.getRoomById);
 router.post('/:id/join', authenticate, validateId(), roomsController.joinRoom);
 router.post('/:id/leave', authenticate, validateId(), roomsController.leaveRoom);

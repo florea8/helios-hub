@@ -11,41 +11,6 @@ function isFriendshipAccepted(userId, friendId) {
     .get(userId, friendId, friendId, userId);
 }
 
-// POST /api/direct-messages/send
-exports.sendDirectMessage = (req, res) => {
-  const { receiverId, content } = req.body;
-  const senderId = req.user.id;
-
-  if (!receiverId || !content || !String(content).trim()) {
-    return res.status(400).json({ error: 'Receiver ID and content required' });
-  }
-
-  if (senderId === Number(receiverId)) {
-    return res.status(400).json({ error: 'Cannot send message to yourself' });
-  }
-
-  const friendship = isFriendshipAccepted(senderId, receiverId);
-  if (!friendship) {
-    return res.status(403).json({ error: 'You can only message accepted friends' });
-  }
-
-  try {
-    const stmt = db.prepare(
-      'INSERT INTO direct_messages (sender_id, receiver_id, content) VALUES (?, ?, ?)'
-    );
-    const result = stmt.run(senderId, receiverId, String(content).trim());
-
-    const row = db
-      .prepare('SELECT * FROM direct_messages WHERE id = ?')
-      .get(result.lastInsertRowid);
-
-    res.status(201).json(row);
-  } catch (error) {
-    console.error('sendDirectMessage error:', error);
-    res.status(500).json({ error: 'DB error' });
-  }
-};
-
 // GET /api/direct-messages/unread: how many unread messages each friend has sent you
 exports.getUnreadCounts = (req, res) => {
   try {

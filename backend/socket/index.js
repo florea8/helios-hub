@@ -100,22 +100,11 @@ function initializeSocket(server) {
         // Every tab the recipient has open gets it; the message waits in the database otherwise.
         io.to(`user-${recipientId}`).emit('receive_message', message);
 
-        // Confirm to sender
-        socket.emit('message_sent', message);
 
       } catch (error) {
         console.error('Error sending message:', error);
         socket.emit('error', { message: 'Failed to send message' });
       }
-    });
-
-    // Handle typing indicator
-    socket.on('typing', (data) => {
-      io.to(`user-${Number(data.recipientId)}`).emit('user_typing', { userId });
-    });
-
-    socket.on('stop_typing', (data) => {
-      io.to(`user-${Number(data.recipientId)}`).emit('user_stop_typing', { userId });
     });
 
     // Room events

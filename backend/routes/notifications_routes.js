@@ -19,6 +19,5 @@ router.put('/mark-all-read', authenticate, notificationsController.markAllAsRead
 router.delete('/:notificationId', authenticate, notificationsController.deleteNotification);
 
 // Delete all read notifications
-router.delete('/read/all', authenticate, notificationsController.deleteAllRead);
 
 module.exports = router;

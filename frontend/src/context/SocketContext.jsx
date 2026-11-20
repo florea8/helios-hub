@@ -87,16 +87,6 @@ export const SocketProvider = ({ children }) => {
     socketRef.current.emit('send_message', { recipientId, content });
   };
 
-  const startTyping = (recipientId) => {
-    if (!socketRef.current || !connected) return;
-    socketRef.current.emit('typing', { recipientId });
-  };
-
-  const stopTyping = (recipientId) => {
-    if (!socketRef.current || !connected) return;
-    socketRef.current.emit('stop_typing', { recipientId });
-  };
-
   const getSocket = () => socketRef.current;
 
   const isUserOnline = (userId) => {
@@ -110,8 +100,6 @@ export const SocketProvider = ({ children }) => {
     connected,
     onlineUsers,
     sendMessage,
-    startTyping,
-    stopTyping,
     getSocket,
     isUserOnline,
     lastSeenOf

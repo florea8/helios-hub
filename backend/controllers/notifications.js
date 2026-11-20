@@ -103,16 +103,3 @@ exports.deleteNotification = (req, res) => {
   }
 };
 
-// Delete all read notifications
-exports.deleteAllRead = (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    const stmt = db.prepare('DELETE FROM notifications WHERE user_id = ? AND read = 1');
-    const result = stmt.run(userId);
-
-    res.json({ success: true, deleted: result.changes });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};

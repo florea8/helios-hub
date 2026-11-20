@@ -263,31 +263,6 @@ exports.getPendingRequests = (req, res) => {
   }
 };
 
-// Get sent friend requests
-exports.getSentRequests = (req, res) => {
-  const userId = req.user.id;
-
-  try {
-    const requests = db.prepare(`
-      SELECT 
-        f.id as request_id,
-        u.id as user_id,
-        u.username,
-        u.profile_picture,
-        f.created_at
-      FROM friends f
-      JOIN users u ON f.friend_id = u.id
-      WHERE f.user_id = ? AND f.status = ?
-      ORDER BY f.created_at DESC
-    `).all(userId, 'PENDING');
-
-    res.json(requests);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
-  }
-};
-
 // People who share at least one interest and have no friendship or pending request with you,
 // most shared interests first. Private profiles are left out.
 exports.getSuggestions = (req, res) => {

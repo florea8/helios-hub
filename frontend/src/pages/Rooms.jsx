@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api, { errorMessage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../hooks/useSocket';
+import { useSocket } from '../context/SocketContext';
 import { useVoiceChat } from '../hooks/useVoiceChat';
 import Layout from '../components/Layout';
 import Dialog from '../components/Dialog';

@@ -18,9 +18,6 @@ router.get('/list', friendsController.getFriendsList);
 // Get pending requests (received)
 router.get('/requests/pending', friendsController.getPendingRequests);
 
-// Get sent requests
-router.get('/requests/sent', friendsController.getSentRequests);
-
 // Send friend request
 router.post('/request', friendsController.sendFriendRequest);
 
