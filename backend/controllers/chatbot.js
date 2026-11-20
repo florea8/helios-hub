@@ -101,7 +101,6 @@ Răspunde prietenos, concis și util. Folosește emoji-uri. Răspunde în limba 
   }
 
   // Final fallback: simple rule-based responses
-  console.log('Using simple fallback responses');
   return generateSimpleResponse(message);
 };
 

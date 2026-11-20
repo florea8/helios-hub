@@ -40,7 +40,6 @@ function initializeSocket(server) {
 
   io.on('connection', (socket) => {
     const userId = socket.userId;
-    console.log(`User ${userId} connected via Socket.io`);
 
     const sockets = onlineUsers.get(userId) || new Set();
     const cameOnline = sockets.size === 0;
@@ -137,7 +136,6 @@ function initializeSocket(server) {
 
     socket.on('voice-leave-room', (data) => {
       const { roomId } = data;
-      console.log(`User ${userId} leaving voice chat in room ${roomId}`);
       
       // Leave voice channel
       socket.leave(`voice_${roomId}`);
@@ -163,7 +161,6 @@ function initializeSocket(server) {
 
     // Handle disconnect
     socket.on('disconnect', () => {
-      console.log(`User ${userId} disconnected`);
       
       const remaining = onlineUsers.get(userId);
       remaining?.delete(socket.id);

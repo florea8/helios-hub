@@ -35,13 +35,11 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('connect', () => {
-      console.log('Socket.io connected');
       setSocket(newSocket);
       setConnected(true);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Socket.io disconnected');
       setConnected(false);
     });
 

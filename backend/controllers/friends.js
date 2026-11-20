@@ -195,7 +195,6 @@ exports.getFriendsList = (req, res) => {
   const userId = req.user.id;
 
   try {
-    console.log(`Getting friends list for user ${userId}`);
     
     // First, get all friends where current user is user_id
     const friends1 = db.prepare(`
@@ -230,7 +229,6 @@ exports.getFriendsList = (req, res) => {
         new Date(b.last_seen || 0) - new Date(a.last_seen || 0)
       );
     
-    console.log(`Found ${allFriends.length} friends`);
     res.json(allFriends);
   } catch (error) {
     console.error('getFriendsList error:', error);
@@ -304,7 +302,6 @@ exports.searchUsers = (req, res) => {
   }
 
   try {
-    console.log(`Searching for users: '${query}' by user ${userId}`);
     
     // Matching on username only: matching on email would let anyone test whether an address has an account.
     const users = db.prepare(`
@@ -315,7 +312,6 @@ exports.searchUsers = (req, res) => {
       LIMIT 20
     `).all(userId, `%${query}%`);
 
-    console.log(`Found ${users.length} users`);
 
     // One query for every result's friendship, instead of one per result.
     const ids = users.map((user) => user.id);
