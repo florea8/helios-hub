@@ -1,11 +1,9 @@
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const path = require('path');
 const { AppError, asyncHandler } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
-const { uploadDir, uploadPath } = require('../config/settings');
+const { saveImage, removeUpload } = require('../utils/images');
 const { interestsOf, setInterests } = require('../utils/interests');
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -76,52 +74,15 @@ exports.login = asyncHandler(async (req, res) => {
 exports.uploadProfilePicture = async (req, res) => {
   try {
     const userId = req.user.id;
-    const fileData = req.body.file; // base64 string
-
-    if (!fileData) {
-      return res.status(400).json({ message: 'No file provided' });
+    const saved = saveImage(req.body.file, 'profiles', userId);
+    if (saved.error) {
+      return res.status(400).json({ message: saved.error });
     }
 
-    // Parse base64 string
-    const matches = fileData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    if (!matches) {
-      return res.status(400).json({ message: 'Invalid file format' });
-    }
+    const old = db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(userId);
+    removeUpload(old?.profile_picture);
 
-    const mimeType = matches[1];
-    const buffer = Buffer.from(matches[2], 'base64');
-
-    // Allowed MIME types
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedMimes.includes(mimeType)) {
-      return res.status(400).json({ message: 'Invalid image format' });
-    }
-
-    // File size limit (5MB)
-    if (buffer.length > 5 * 1024 * 1024) {
-      return res.status(400).json({ message: 'File too large' });
-    }
-
-    // Get file extension
-    const ext = mimeType.split('/')[1].split(';')[0];
-    const filename = `${userId}-${Date.now()}.${ext}`;
-    const uploadsDir = path.join(uploadDir, 'profiles');
-
-    // Delete old profile picture if exists
-    const oldUser = db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(userId);
-    if (oldUser && oldUser.profile_picture) {
-      const oldPath = uploadPath(oldUser.profile_picture);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-      }
-    }
-
-    // Save new file
-    const filePath = path.join(uploadsDir, filename);
-    fs.writeFileSync(filePath, buffer);
-
-    // Update user profile picture path in database
-    const relativePath = `uploads/profiles/${filename}`;
+    const relativePath = saved.path;
     db.prepare('UPDATE users SET profile_picture = ? WHERE id = ?').run(relativePath, userId);
 
     res.json({

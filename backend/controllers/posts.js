@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const notificationsController = require('./notifications');
+const { saveImage, removeUpload } = require('../utils/images');
 
 // Get socket instance - will be set by socket/index.js
 let ioInstance = null;
@@ -28,12 +29,20 @@ exports.createPost = async (req, res) => {
     return res.status(400).json({ message: 'Invalid post type' });
   }
 
+  // The picture is stored as a file; the post keeps only its path.
+  let imagePath = null;
+  if (image) {
+    const saved = saveImage(image, 'posts', userId);
+    if (saved.error) return res.status(400).json({ message: saved.error });
+    imagePath = saved.path;
+  }
+
   try {
     // The post and its tags are saved together or not at all. Unknown tag ids are skipped.
     const postId = db.transaction(() => {
       const { lastInsertRowid } = db
         .prepare('INSERT INTO posts (user_id, title, description, post_type, image) VALUES (?, ?, ?, ?, ?)')
-        .run(userId, title || '', description, type, image || null);
+        .run(userId, title || '', description, type, imagePath);
       const tag = db.prepare('INSERT INTO post_tags (post_id, tag_id) SELECT ?, id FROM tags WHERE id = ?');
       for (const tagId of tags || []) tag.run(lastInsertRowid, tagId);
       return lastInsertRowid;
@@ -170,12 +179,8 @@ exports.getPostById = async (req, res) => {
 // UPDATE POST
 exports.updatePost = async (req, res) => {
   const { id } = req.params;
-  const { title, description, status, image } = req.body;
+  const { title, description, status } = req.body;
   const userId = req.user.id;
-
-  if (!title || !description) {
-    return res.status(400).json({ message: 'Title and description required' });
-  }
 
   try {
     const stmtCheck = db.prepare('SELECT * FROM posts WHERE id = ? AND user_id = ?');
@@ -185,8 +190,10 @@ exports.updatePost = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    const stmtUpdate = db.prepare('UPDATE posts SET title = ?, description = ?, status = ?, image = ? WHERE id = ?');
-    stmtUpdate.run(title, description, status || 'OPEN', image || null, id);
+    // Only the fields sent change; the image is left as it is.
+    db.prepare(
+      'UPDATE posts SET title = COALESCE(?, title), description = COALESCE(?, description), status = COALESCE(?, status) WHERE id = ?'
+    ).run(title ?? null, description ?? null, status ?? null, id);
 
     res.json({ message: 'Post updated' });
   } catch (err) {
@@ -209,6 +216,7 @@ exports.deletePost = async (req, res) => {
 
     const stmtDelete = db.prepare('DELETE FROM posts WHERE id = ?');
     stmtDelete.run(id);
+    removeUpload(post.image);
 
     res.json({ message: 'Post deleted' });
   } catch (err) {

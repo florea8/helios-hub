@@ -38,9 +38,10 @@ app.use(cors({
   exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
-app.use(express.json({ limit: '50mb' }));
+// Big enough for a 5 MB image sent as base64, which is about a third larger.
+app.use(express.json({ limit: '8mb' }));
 
-for (const folder of ['profiles', 'room-files']) {
+for (const folder of ['profiles', 'posts', 'room-files']) {
   fs.mkdirSync(path.join(uploadDir, folder), { recursive: true });
 }
 
