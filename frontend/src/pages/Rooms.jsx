@@ -99,6 +99,20 @@ const Rooms = () => {
     };
   }, [socket, roomId]);
 
+  // An admin or moderator removed you: hang up and show the room as an outsider sees it.
+  const { active: inVoice, leave: leaveVoice } = voice;
+  useEffect(() => {
+    if (!socket || !roomId) return;
+    const onRemoved = ({ roomId: id }) => {
+      if (id !== roomId) return;
+      if (inVoice) leaveVoice();
+      setError('You were removed from this room.');
+      loadRoom(roomId).then(showRoom).catch(fail('Could not reload the room.'));
+    };
+    socket.on('removed-from-room', onRemoved);
+    return () => socket.off('removed-from-room', onRemoved);
+  }, [socket, roomId, inVoice, leaveVoice, loadRoom, showRoom, fail]);
+
   const current = room?.id === roomId ? room : null;
 
   const reloadMembers = () => api.get(`/api/rooms/${roomId}/members`).then(({ data }) => setMembers(data));

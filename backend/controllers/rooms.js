@@ -193,6 +193,7 @@ exports.leaveRoom = async (req, res) => {
     // Leave room
     const stmt = db.prepare('DELETE FROM room_members WHERE room_id = ? AND user_id = ?');
     stmt.run(id, userId);
+    getIO().in(`user-${userId}`).socketsLeave([`room_${id}`, `voice_${id}`]);
 
     res.json({ message: 'Left room successfully' });
   } catch (err) {
@@ -477,10 +478,10 @@ exports.removeMember = async (req, res) => {
     const deleteStmt = db.prepare('DELETE FROM room_members WHERE room_id = ? AND user_id = ?');
     deleteStmt.run(id, memberId);
 
-    // Broadcast removal
+    // Their open pages stop getting the room's messages and voice, and are told why.
     try {
       const io = getIO();
-      // Notify removed user
+      io.in(`user-${memberId}`).socketsLeave([`room_${id}`, `voice_${id}`]);
       io.to(`user-${memberId}`).emit('removed-from-room', {
         roomId: Number(id)
       });
