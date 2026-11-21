@@ -6,50 +6,20 @@ const axios = require('axios');
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-// Simple fallback responses when no API is configured
-const generateSimpleResponse = (message) => {
-  const lowercaseMessage = message.toLowerCase();
+// Rule-based answers for when no AI key is configured or the AI service fails.
+const FALLBACK = [
+  [/\b(hello|hi|hey)\b/, "Hi, I'm the Helios assistant. Ask me about rooms, tasks or working with your group."],
+  [/\b(help|what can you)\b/, 'I can help with:\n- planning tasks and deadlines\n- keeping a group project moving\n- how rooms, tasks and voice work in Helios'],
+  [/\b(tasks?|deadlines?)\b/, 'Some task tips:\n- split big work into small tasks\n- give each a realistic due date\n- use HIGH priority sparingly\n- tick tasks off so the room sees progress'],
+  [/\b(team|group|together|collaborat\w*)\b/, 'To keep a group moving:\n- agree on the goal in the room description\n- give every task an owner\n- check in here at least once a day\n- use voice for quick decisions'],
+  [/\b(thanks|thank you)\b/, 'Glad to help.'],
+];
 
-  if (lowercaseMessage.match(/\b(salut|hello|hi|hey|buna|bună)\b/)) {
-    return "👋 Salut! Sunt Helios assistant, asistentul virtual al acestui room. Cum te pot ajuta?";
-  }
+const generateSimpleResponse = (message) =>
+  FALLBACK.find(([pattern]) => pattern.test(message.toLowerCase()))?.[1] ||
+  'Ask me about tasks, deadlines or working as a group. Write "help" to see what I can do.';
 
-  if (lowercaseMessage.match(/\b(ajutor|help|ce poti|ce poți)\b/)) {
-    return "🤖 Pot să te ajut cu:\n• Sfaturi despre task management\n• Sugestii pentru colaborare\n• Informații despre funcționalitățile Helios\n• Răspunsuri la întrebări generale\n\nÎntreabă-mă orice!";
-  }
-
-  if (lowercaseMessage.match(/\b(task|taskuri|sarcini)\b/)) {
-    return "📋 Sfaturi pentru task-uri:\n• Împarte proiectele mari în task-uri mici\n• Setează deadline-uri realiste\n• Folosește priorități (HIGH/NORMAL/LOW)\n• Marchează task-urile complete pentru progres";
-  }
-
-  if (lowercaseMessage.match(/\b(c\+\+|cpp|program|cod|code)\b/)) {
-    return "💻 Exemplu Hello World în C++:\n\n```cpp\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"Hello World!\" << endl;\n    return 0;\n}\n```\n\nCompilează cu: `g++ program.cpp -o program`";
-  }
-
-  if (lowercaseMessage.match(/\b(python|py|script)\b/)) {
-    return "🐍 Exemplu Hello World în Python:\n\n```python\nprint(\"Hello World!\")\n```\n\nRulează cu: `python program.py`";
-  }
-
-  if (lowercaseMessage.match(/\b(javascript|js|node)\b/)) {
-    return "⚡ Exemplu Hello World în JavaScript:\n\n```javascript\nconsole.log(\"Hello World!\");\n```\n\nRulează în browser sau cu Node.js: `node program.js`";
-  }
-
-  if (lowercaseMessage.match(/\b(colaborare|echipă|team)\b/)) {
-    return "👥 Sfaturi pentru colaborare:\n• Comunicați zilnic în chat\n• Partajați muzică pentru ambient\n• Verificați timeline-ul task-urilor\n• Respectați contribuțiile fiecăruia";
-  }
-
-  if (lowercaseMessage.match(/\b(productivitate|eficient|productiv)\b/)) {
-    return "⚡ Pentru productivitate:\n• Lucrează în sesiuni de 25-50 min\n• Fă pauze scurte\n• Prioritizează task-urile importante\n• Folosește chat-ul pentru clarificări";
-  }
-
-  if (lowercaseMessage.match(/\b(mersi|mulțumesc|thanks)\b/)) {
-    return "😊 Cu plăcere! Sunt aici să ajut!";
-  }
-
-  return "🤔 Interesant! Încearcă să întrebi despre task-uri, colaborare sau funcționalități. Scrie 'ajutor' pentru mai multe opțiuni!";
-};
-
-// Generate AI response using Groq API or Hugging Face fallback
+// Generate AI response using the Groq API, falling back to the rules above
 const generateAIResponse = async (message, conversationHistory = []) => {
   // Try Groq API first if key is available
   if (GROQ_API_KEY) {
@@ -57,9 +27,9 @@ const generateAIResponse = async (message, conversationHistory = []) => {
       const messages = [
         {
           role: 'system',
-          content: `Tu ești Helios assistant, un asistent AI integrat într-o platformă de colaborare numită Helios. 
-Ajuți utilizatorii cu întrebări despre funcționalități (rooms, tasks, colaborare), productivitate și lucrul în echipă.
-Răspunde prietenos, concis și util. Folosește emoji-uri. Răspunde în limba întrebării (română sau engleză).`
+          content: `You are the Helios assistant, built into Helios, a place where people with shared interests meet to discuss, solve problems and build projects together.
+You help a room's members with its topic, with planning their tasks and with working as a group.
+Be friendly, short and practical. Answer in the language of the question.`
         },
         ...conversationHistory.slice(-5).map(msg => ({
           role: msg.isBot ? 'assistant' : 'user',
@@ -94,7 +64,7 @@ Răspunde prietenos, concis și util. Folosește emoji-uri. Răspunde în limba 
       console.error('Groq API error:', error.response?.data?.error?.message || error.message);
       
       if (error.response?.status === 429) {
-        return "⚠️ Prea multe cereri. Încearcă din nou în câteva secunde.";
+        return 'Too many questions at once. Try again in a few seconds.';
       }
       // Fall through to simple responses
     }
@@ -162,6 +132,6 @@ exports.handleChatbotMessage = async (req, res) => {
     });
   } catch (err) {
     console.error('Chatbot error:', err);
-    res.status(500).json({ message: 'Chatbot error', error: err.message });
+    res.status(500).json({ message: 'Chatbot error' });
   }
 };
