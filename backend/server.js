@@ -93,7 +93,8 @@ app.use(errorHandler);
 const server = http.createServer(app);
 initializeSocket(server);
 
-const PORT = process.env.PORT || 5000;
+// PORT=0 picks a free port, which the tests use; the line below names the real one.
+const PORT = process.env.PORT ?? 5000;
 server.listen(PORT, () =>
-  console.log(`Backend running on http://localhost:${PORT}`)
+  console.log(`Backend running on http://localhost:${server.address().port}`)
 );

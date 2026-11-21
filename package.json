@@ -9,6 +9,7 @@
     "dev:frontend": "cd frontend && npm run dev",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "build": "cd frontend && npm run build",
+    "test": "cd backend && npm test",
     "format": "prettier --write \"**/*.{js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,json,css,md}\""
   },

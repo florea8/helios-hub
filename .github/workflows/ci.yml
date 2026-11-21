@@ -27,9 +27,6 @@ jobs:
     defaults:
       run:
         working-directory: backend
-    env:
-      # Throwaway value: the server refuses to start without one.
-      JWT_SECRET: ci-only-not-a-real-secret
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -38,7 +35,4 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
-      - name: Server starts and reaches the database
-        run: |
-          node server.js &
-          curl --fail --silent --show-error --retry 10 --retry-delay 1 --retry-connrefused http://localhost:5000/test-db
+      - run: npm test
