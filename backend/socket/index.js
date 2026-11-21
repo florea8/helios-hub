@@ -64,8 +64,12 @@ function initializeSocket(server) {
     // Handle sending direct messages
     socket.on('send_message', async (data) => {
       const recipientId = Number(data.recipientId);
-      const { content } = data;
-      
+      const content = typeof data.content === 'string' ? data.content.trim() : '';
+      if (!content || content.length > 1000) {
+        socket.emit('error', { message: 'Messages need 1 to 1000 characters.' });
+        return;
+      }
+
       try {
         // Verify friendship
         const friendship = db.prepare(`

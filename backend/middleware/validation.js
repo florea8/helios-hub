@@ -17,6 +17,14 @@ const taskFields = {
   priority: Joi.string().valid('LOW', 'NORMAL', 'HIGH').default('NORMAL')
 };
 
+// Profile links are shown to everyone as links, so only web addresses are allowed (no javascript: and the like).
+const profileLink = Joi.string()
+  .trim()
+  .max(200)
+  .uri({ scheme: ['http', 'https'] })
+  .allow('', null)
+  .messages({ 'string.uri': 'Links must start with http:// or https://', 'string.uriCustomScheme': 'Links must start with http:// or https://' });
+
 // Validation schemas
 const schemas = {
   // Auth schemas
@@ -69,6 +77,16 @@ const schemas = {
 
   toggleTask: Joi.object({
     status: Joi.string().valid('PENDING', 'DONE').required()
+  }),
+
+  updateProfile: Joi.object({
+    bio: Joi.string().max(300).allow('', null),
+    location: Joi.string().max(100).allow('', null),
+    website: profileLink,
+    github_url: profileLink,
+    linkedin_url: profileLink,
+    twitter_url: profileLink,
+    is_profile_public: Joi.boolean()
   }),
 
   setInterests: Joi.object({

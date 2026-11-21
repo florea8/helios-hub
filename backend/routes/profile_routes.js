@@ -5,7 +5,7 @@ const { authenticate } = require('../middleware/mid');
 const { validate } = require('../middleware/validation');
 
 // Profile update
-router.put('/update', authenticate, profileController.updateProfile);
+router.put('/update', authenticate, validate('updateProfile'), profileController.updateProfile);
 router.put('/interests', authenticate, validate('setInterests'), profileController.updateInterests);
 router.get('/:userId', authenticate, profileController.getUserProfile);
 

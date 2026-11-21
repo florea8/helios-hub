@@ -4,7 +4,7 @@ const notificationsController = require('./notifications');
 
 // Send friend request
 exports.sendFriendRequest = (req, res) => {
-  const { friendId } = req.body;
+  const friendId = Number(req.body.friendId);
   const userId = req.user.id;
 
   if (!friendId) {

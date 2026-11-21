@@ -37,6 +37,9 @@ exports.sendMessage = async (req, res) => {
   if (!roomId || (!content && !file)) {
     return res.status(400).json({ message: 'Room ID and content or file required' });
   }
+  if (content && content.length > 1000) {
+    return res.status(400).json({ message: 'Messages can be at most 1000 characters.' });
+  }
 
   try {
     // Check if room exists
@@ -100,14 +103,16 @@ exports.getMessagesForRoom = async (req, res) => {
     const countStmt = db.prepare('SELECT COUNT(*) as total FROM messages WHERE room_id = ?');
     const { total } = countStmt.get(roomId);
 
-    // Get paginated messages
+    // The newest messages, oldest first; offset steps back through older ones.
     const stmt = db.prepare(`
-      SELECT m.*, u.username, u.profile_picture 
-      FROM messages m 
-      JOIN users u ON m.user_id = u.id 
-      WHERE m.room_id = ? 
-      ORDER BY m.created_at ASC
-      LIMIT ? OFFSET ?
+      SELECT * FROM (
+        SELECT m.*, u.username, u.profile_picture
+        FROM messages m
+        JOIN users u ON m.user_id = u.id
+        WHERE m.room_id = ?
+        ORDER BY m.id DESC
+        LIMIT ? OFFSET ?
+      ) ORDER BY id ASC
     `);
     const rows = stmt.all(roomId, limitNum, offsetNum);
 

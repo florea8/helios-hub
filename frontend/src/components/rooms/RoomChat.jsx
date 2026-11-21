@@ -131,6 +131,7 @@ const RoomChat = ({ room, messages, setMessages, onError }) => {
             className="field-input"
             aria-label="Message"
             placeholder="Write a message"
+            maxLength={1000}
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
