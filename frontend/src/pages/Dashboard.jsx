@@ -319,7 +319,13 @@ const Dashboard = () => {
           ) : posts.length ? (
             <div className="dash-posts">
               {posts.map((post) => (
-                <PostCard key={post.id} post={post} onLike={toggleLike} />
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onLike={toggleLike}
+                  onChange={(next) => setPosts((prev) => prev.map((item) => (item.id === next.id ? next : item)))}
+                  onDelete={(id) => setPosts((prev) => prev.filter((item) => item.id !== id))}
+                />
               ))}
             </div>
           ) : (

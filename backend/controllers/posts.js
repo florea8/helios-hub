@@ -201,6 +201,20 @@ exports.updatePost = async (req, res) => {
   }
 };
 
+// Deletes a post. A room post takes its room along (members, messages and tasks go through ON DELETE CASCADE),
+// so the room's files are removed from disk and anyone with the room open is told.
+exports.removePost = (post) => {
+  const room = db.prepare('SELECT id FROM rooms WHERE post_id = ?').get(post.id);
+  const files = room
+    ? db.prepare('SELECT file_path FROM messages WHERE room_id = ? AND file_path IS NOT NULL').all(room.id)
+    : [];
+
+  db.prepare('DELETE FROM posts WHERE id = ?').run(post.id);
+  removeUpload(post.image);
+  files.forEach((file) => removeUpload(file.file_path));
+  if (room) ioInstance?.to(`room_${room.id}`).emit('room-deleted', { roomId: room.id });
+};
+
 // DELETE POST
 exports.deletePost = async (req, res) => {
   const { id } = req.params;
@@ -214,10 +228,7 @@ exports.deletePost = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    const stmtDelete = db.prepare('DELETE FROM posts WHERE id = ?');
-    stmtDelete.run(id);
-    removeUpload(post.image);
-
+    exports.removePost(post);
     res.json({ message: 'Post deleted' });
   } catch (err) {
     res.status(500).json({ message: 'DB error' });

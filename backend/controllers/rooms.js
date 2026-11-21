@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const { getIO } = require('../socket');
 const notificationsController = require('./notifications');
+const { removePost } = require('./posts');
 
 // CREATE ROOM
 exports.createRoom = async (req, res) => {
@@ -190,6 +191,12 @@ exports.leaveRoom = async (req, res) => {
       return res.status(400).json({ message: 'Not a member of this room' });
     }
 
+    // A room always keeps an owner.
+    const room = db.prepare('SELECT created_by FROM rooms WHERE id = ?').get(id);
+    if (room.created_by === userId) {
+      return res.status(400).json({ message: 'Make someone else the owner, or delete the room, before you leave.' });
+    }
+
     // Leave room
     const stmt = db.prepare('DELETE FROM room_members WHERE room_id = ? AND user_id = ?');
     stmt.run(id, userId);
@@ -266,12 +273,12 @@ exports.deleteRoom = async (req, res) => {
       return res.status(404).json({ message: 'Room not found' });
     }
 
-    if (room.created_by !== userId && req.user.role !== 'PRO') {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (room.created_by !== userId) {
+      return res.status(403).json({ message: 'Only the owner can delete the room.' });
     }
 
-    const stmt = db.prepare('DELETE FROM rooms WHERE id = ?');
-    stmt.run(id);
+    // The room lives on its post, so deleting the post deletes the room and leaves nothing behind in the feed.
+    removePost(db.prepare('SELECT id, image FROM posts WHERE id = ?').get(room.post_id));
 
     res.json({ message: 'Room deleted successfully' });
   } catch (err) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import api, { errorMessage } from '../services/api';
 import Layout from '../components/Layout';
 import PostCard from '../components/PostCard';
@@ -9,6 +9,7 @@ import LoadingSkeleton from '../components/LoadingSkeleton';
 // One post with its replies open. Notifications about likes and replies link here.
 const PostPage = () => {
   const { postId } = useParams();
+  const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [error, setError] = useState('');
 
@@ -46,7 +47,7 @@ const PostPage = () => {
         ) : !post ? (
           <LoadingSkeleton count={1} />
         ) : (
-          <PostCard post={post} onLike={toggleLike} openReplies />
+          <PostCard post={post} onLike={toggleLike} onChange={setPost} onDelete={() => navigate('/dashboard')} openReplies />
         )}
       </div>
     </Layout>

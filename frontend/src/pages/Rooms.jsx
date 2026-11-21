@@ -99,19 +99,41 @@ const Rooms = () => {
     };
   }, [socket, roomId]);
 
-  // An admin or moderator removed you: hang up and show the room as an outsider sees it.
   const { active: inVoice, leave: leaveVoice } = voice;
+
+  // You left or were removed: hang up and show the room as an outsider sees it.
+  const becomeOutsider = useCallback(() => {
+    if (inVoice) leaveVoice();
+    loadRoom(roomId).then(showRoom).catch(fail('Could not reload the room.'));
+    api.get('/api/rooms').then(({ data }) => setRooms(data)).catch(fail('Could not load the rooms.'));
+  }, [inVoice, leaveVoice, loadRoom, showRoom, fail, roomId]);
+
+  const dropRoom = useCallback(
+    (id) => {
+      setRooms((prev) => prev?.filter((item) => item.id !== id));
+      if (id !== roomId) return;
+      if (inVoice) leaveVoice();
+      setError('This room was deleted.');
+      setParams({});
+    },
+    [roomId, inVoice, leaveVoice, setParams]
+  );
+
   useEffect(() => {
     if (!socket || !roomId) return;
     const onRemoved = ({ roomId: id }) => {
       if (id !== roomId) return;
-      if (inVoice) leaveVoice();
       setError('You were removed from this room.');
-      loadRoom(roomId).then(showRoom).catch(fail('Could not reload the room.'));
+      becomeOutsider();
     };
+    const onDeleted = ({ roomId: id }) => dropRoom(id);
     socket.on('removed-from-room', onRemoved);
-    return () => socket.off('removed-from-room', onRemoved);
-  }, [socket, roomId, inVoice, leaveVoice, loadRoom, showRoom, fail]);
+    socket.on('room-deleted', onDeleted);
+    return () => {
+      socket.off('removed-from-room', onRemoved);
+      socket.off('room-deleted', onDeleted);
+    };
+  }, [socket, roomId, becomeOutsider, dropRoom]);
 
   const current = room?.id === roomId ? room : null;
 
@@ -120,7 +142,11 @@ const Rooms = () => {
   const join = () =>
     api
       .post(`/api/rooms/${roomId}/join`)
-      .then(() => loadRoom(roomId))
+      .then(() => {
+        // The room's live channel only lets members in, so ask again now that you are one.
+        socket?.emit('join-room', roomId);
+        return loadRoom(roomId);
+      })
       .then(showRoom)
       .catch(fail('Could not join the room.'));
 
@@ -218,6 +244,7 @@ const Rooms = () => {
             voice={voice}
             user={user}
             onError={setError}
+            onLeave={(deleted) => (deleted ? dropRoom(current.id) : becomeOutsider())}
           />
         )}
       </div>

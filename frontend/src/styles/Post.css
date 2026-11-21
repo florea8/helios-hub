@@ -50,6 +50,12 @@
   align-items: center;
 }
 
+.post-own {
+  display: flex;
+  gap: 14px;
+  margin-left: auto;
+}
+
 .post-like {
   padding: 4px 10px;
   font-weight: 800;

@@ -340,8 +340,23 @@ function Music({ room, setRoom, onError }) {
   );
 }
 
-function About({ room, setRoom, onError }) {
+function About({ room, setRoom, user, onError, onLeave }) {
   const [form, setForm] = useState(null); // null while the dialog is closed
+  const iOwn = room.created_by === user.id;
+
+  // The owner deletes the room; everyone else can leave it.
+  const leaveOrDelete = async () => {
+    const question = iOwn
+      ? 'Delete this room for everyone? Its messages, files, tasks and its post in the feed go with it.'
+      : 'Leave this room? You can join again later.';
+    if (!window.confirm(question)) return;
+    try {
+      await (iOwn ? api.delete(`/api/rooms/${room.id}`) : api.post(`/api/rooms/${room.id}/leave`));
+      onLeave(iOwn);
+    } catch (err) {
+      onError(errorMessage(err, iOwn ? 'Could not delete the room.' : 'Could not leave the room.'));
+    }
+  };
 
   const save = async (e) => {
     e.preventDefault();
@@ -380,6 +395,12 @@ function About({ room, setRoom, onError }) {
       <p className="side-quiet">
         Started by <Link to={`/profile/${room.created_by}`} className="link">{room.creator_username}</Link>
       </p>
+      <p className="side-quiet">
+        <button type="button" className="link" onClick={leaveOrDelete}>
+          {iOwn ? 'Delete room' : 'Leave room'}
+        </button>
+      </p>
+      {iOwn && <p className="side-quiet">To leave, first make someone else the owner from People.</p>}
 
       <Dialog open={Boolean(form)} title="Room settings" onClose={() => setForm(null)}>
         {form && (
