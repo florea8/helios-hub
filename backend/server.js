@@ -45,12 +45,16 @@ for (const folder of ['profiles', 'posts', 'room-files']) {
   fs.mkdirSync(path.join(uploadDir, folder), { recursive: true });
 }
 
-app.use('/uploads', cors(), express.static(uploadDir, {
-  setHeaders: (res, filePath) => {
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-}));
+// Profile and post pictures are public. Room files are not served here: members download them
+// through /api/messages/download, which checks membership.
+for (const folder of ['profiles', 'posts']) {
+  app.use(`/uploads/${folder}`, cors(), express.static(path.join(uploadDir, folder), {
+    setHeaders: (res) => {
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+  }));
+}
 
 // Import rate limiters
 const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');

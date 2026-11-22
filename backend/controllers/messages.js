@@ -135,10 +135,14 @@ exports.downloadFile = async (req, res) => {
   const filePath = path.join(uploadDir, 'room-files', filename);
 
   try {
-    // Only files that were sent in a room can be downloaded.
-    const message = db.prepare('SELECT file_name FROM messages WHERE file_path = ?').get('uploads/room-files/' + filename);
+    // Only files sent in a room can be downloaded, and only by that room's members.
+    const message = db.prepare('SELECT room_id, file_name FROM messages WHERE file_path = ?').get('uploads/room-files/' + filename);
     if (!message || !fs.existsSync(filePath)) {
       return res.status(404).json({ message: 'File not found' });
+    }
+    const member = db.prepare('SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?').get(message.room_id, req.user.id);
+    if (!member) {
+      return res.status(403).json({ message: 'Join the room to open its files.' });
     }
 
     res.download(filePath, message.file_name);

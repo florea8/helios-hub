@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api, { errorMessage, fileUrl } from '../../services/api';
+import api, { errorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import Avatar from '../Avatar';
 import { formatDateTime } from '../../utils/time';
@@ -10,19 +10,56 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const formatSize = (bytes) =>
   bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
-const downloadUrl = (message) => fileUrl(`api/messages/download/${message.file_path.split('/').pop()}`);
+// Room files are for members only, so they are fetched with the sign-in token
+// (a plain <img src> or link would not send it) and shown from memory.
+const loadFile = (message) =>
+  api
+    .get(`/api/messages/download/${message.file_path.split('/').pop()}`, { responseType: 'blob' })
+    .then(({ data }) => URL.createObjectURL(data));
 
-const Attachment = ({ message }) =>
+const save = (message, onError) =>
+  loadFile(message)
+    .then((url) => {
+      const link = Object.assign(document.createElement('a'), { href: url, download: message.file_name });
+      link.click();
+      // Released a moment later: some browsers still read the URL after click() returns.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    })
+    .catch(() => onError('Could not download the file.'));
+
+const RoomImage = ({ message, onError }) => {
+  const [src, setSrc] = useState(null);
+
+  useEffect(() => {
+    let url = null;
+    let gone = false;
+    loadFile(message)
+      .then((loaded) => (gone ? URL.revokeObjectURL(loaded) : setSrc((url = loaded))))
+      .catch(() => {}); // the file name stays on screen as the fallback below
+    return () => {
+      gone = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+    // A message's file never changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [message.id]);
+
+  return (
+    <button type="button" title="Download" onClick={() => save(message, onError)}>
+      {src ? <img src={src} alt={message.file_name} /> : <span className="label">{message.file_name}</span>}
+    </button>
+  );
+};
+
+const Attachment = ({ message, onError }) =>
   message.file_type?.startsWith('image/') ? (
-    <a href={downloadUrl(message)} title="Download">
-      <img src={fileUrl(message.file_path)} alt={message.file_name} />
-    </a>
+    <RoomImage message={message} onError={onError} />
   ) : (
-    <a href={downloadUrl(message)} className="room-file">
+    <button type="button" className="room-file" onClick={() => save(message, onError)}>
       <b>{message.file_name.split('.').pop().slice(0, 4)}</b>
       <span>{message.file_name}</span>
       <span className="label">{formatSize(message.file_size)}</span>
-    </a>
+    </button>
   );
 
 const RoomChat = ({ room, messages, setMessages, onError }) => {
@@ -93,7 +130,7 @@ const RoomChat = ({ room, messages, setMessages, onError }) => {
                   {formatDateTime(message.created_at)}
                 </p>
                 {message.content && <p>{message.content}</p>}
-                {message.file_name && <Attachment message={message} />}
+                {message.file_name && <Attachment message={message} onError={onError} />}
               </div>
             </li>
           );

@@ -140,18 +140,27 @@ test('only the owner can delete a room, and its post and files go with it', asyn
   assert.ok(!fs.existsSync(file));
 });
 
-test('only files sent in a room can be downloaded', async () => {
+test('room files are for the room\'s members only', async () => {
   const { roomId } = await app.openRoom(owner);
   const form = new FormData();
   form.append('file', new Blob(['plan']), 'plan.txt');
   const sent = await app.request('POST', `/api/messages/${roomId}`, { token: owner.token, form });
   const name = path.basename(sent.body.file_path);
+  const download = (token) =>
+    fetch(`${app.base}/api/messages/download/${name}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
 
-  const ok = await fetch(`${app.base}/api/messages/download/${name}`);
+  const ok = await download(owner.token);
   assert.equal(ok.status, 200);
   assert.equal(await ok.text(), 'plan');
+  assert.equal((await download(outsider.token)).status, 403);
+  assert.equal((await download()).status, 401);
+  // The folder itself is not served, so the stored path is no way around the check.
+  assert.equal((await fetch(`${app.base}/${sent.body.file_path}`)).status, 404);
   // An encoded ../ must not reach files outside the room folder.
-  assert.equal((await fetch(`${app.base}/api/messages/download/..%2F..%2Fserver.js`)).status, 404);
+  const escape = await fetch(`${app.base}/api/messages/download/..%2F..%2Fserver.js`, {
+    headers: { Authorization: `Bearer ${owner.token}` },
+  });
+  assert.equal(escape.status, 404);
 });
 
 test('the assistant answers members in English', async () => {

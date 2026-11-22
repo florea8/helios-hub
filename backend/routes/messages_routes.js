@@ -9,6 +9,6 @@ const { requireRoomMember } = require('../middleware/roomAccess');
 // Membership is checked before the upload, so outsiders cannot store files.
 router.post('/:roomId', authenticate, messageLimiter, validateId('roomId'), requireRoomMember(), messagesController.uploadMiddleware, messagesController.sendMessage);
 router.get('/room/:roomId', authenticate, validateId('roomId'), requireRoomMember(), messagesController.getMessagesForRoom);
-router.get('/download/:filename', messagesController.downloadFile);
+router.get('/download/:filename', authenticate, messagesController.downloadFile);
 
 module.exports = router;
