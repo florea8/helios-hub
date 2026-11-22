@@ -12,14 +12,6 @@ const setSocketInstance = (io) => {
 // end_date is a day (YYYY-MM-DD), so a task is due at the end of that day: datetime(end_date, '+1 day').
 const checkTaskDeadlines = () => {
   try {
-    // Get tasks with deadlines in the next 24 hours that haven't been completed
-    const now = new Date();
-    const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const in1Hour = new Date(now.getTime() + 60 * 60 * 1000);
-
-    // Format dates for SQLite
-    const formatDate = (date) => date.toISOString().slice(0, 19).replace('T', ' ');
-
     // Find tasks due in 24 hours
     const tasks24h = db.prepare(`
       SELECT 

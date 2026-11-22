@@ -65,8 +65,9 @@ exports.getPosts = async (req, res) => {
   const mine = req.query.feed === 'mine';
   const kind = ['standard', 'room'].includes(req.query.type) ? req.query.type : null;
 
-  const limitNum = parseInt(limit);
-  const offsetNum = parseInt(offset);
+  // A page is at most 50 posts, so one request cannot ask for the whole table.
+  const limitNum = Math.min(parseInt(limit) || 10, 50);
+  const offsetNum = Math.max(parseInt(offset) || 0, 0);
 
   // Optional filters: one person's posts, one tag, and text in the title, body or author name.
   const conditions = [];
