@@ -89,15 +89,20 @@ const Rooms = () => {
     const onMusic = (payload) => Number(payload.roomId) === roomId && setRoom((prev) => prev && { ...prev, ...payload });
     const onSettings = ({ roomId: id, description, rules }) =>
       Number(id) === roomId && setRoom((prev) => prev && { ...prev, description, rules });
+    const onTasks = ({ roomId: id }) =>
+      id === roomId &&
+      api.get(`/api/tasks/${roomId}`).then(({ data }) => setTasks(data)).catch(fail('Could not refresh the tasks.'));
     socket.on('room-message', onMessage);
     socket.on('room-music-update', onMusic);
     socket.on('room-settings-update', onSettings);
+    socket.on('room-tasks-changed', onTasks);
     return () => {
       socket.off('room-message', onMessage);
       socket.off('room-music-update', onMusic);
       socket.off('room-settings-update', onSettings);
+      socket.off('room-tasks-changed', onTasks);
     };
-  }, [socket, roomId]);
+  }, [socket, roomId, fail]);
 
   const { active: inVoice, leave: leaveVoice } = voice;
 

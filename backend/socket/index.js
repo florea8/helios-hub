@@ -148,14 +148,21 @@ function initializeSocket(server) {
       socket.to(`voice_${roomId}`).emit('voice-user-left', { userId });
     });
 
-    socket.on('voice-signal', (data) => {
-      const { targetUserId, signal } = data;
-      io.to(`user-${Number(targetUserId)}`).emit('voice-signal', { fromUserId: userId, signal });
+    // A signal opens a microphone connection, so it only passes between people in the same call.
+    socket.on('voice-signal', async (data) => {
+      const { roomId, targetUserId, signal } = data;
+      const call = `voice_${roomId}`;
+      if (!socket.rooms.has(call)) return;
+      const targets = await io.in(`user-${Number(targetUserId)}`).fetchSockets();
+      targets
+        .filter((target) => target.rooms.has(call))
+        .forEach((target) => target.emit('voice-signal', { fromUserId: userId, signal }));
     });
 
     socket.on('voice-mute-toggle', (data) => {
       const { roomId, isMuted } = data;
-      
+      if (!socket.rooms.has(`voice_${roomId}`)) return;
+
       // Broadcast mute status to others in voice room
       socket.to(`voice_${roomId}`).emit('voice-user-muted', {
         userId,

@@ -20,6 +20,13 @@ exports.createRoom = async (req, res) => {
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
+    // Deleting a room deletes its post, so a room may only sit on its owner's own room post, and only one per post.
+    if (post.user_id !== userId) {
+      return res.status(403).json({ message: 'You can only open a room on your own post.' });
+    }
+    if (post.post_type !== 'room' || db.prepare('SELECT 1 FROM rooms WHERE post_id = ?').get(postId)) {
+      return res.status(400).json({ message: 'This post cannot hold a new room.' });
+    }
 
     // Create room
     const stmt = db.prepare('INSERT INTO rooms (post_id, name, created_by) VALUES (?, ?, ?)');
@@ -530,16 +537,15 @@ exports.transferOwnership = async (req, res) => {
       return res.status(400).json({ message: 'New owner must be a room member' });
     }
 
-    // Update room creator
-    const updateRoomStmt = db.prepare('UPDATE rooms SET created_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
-    updateRoomStmt.run(newOwnerId, id);
-
-    // Update roles: old owner becomes moderator, new owner becomes admin
-    const updateOldOwner = db.prepare('UPDATE room_members SET role = ? WHERE room_id = ? AND user_id = ?');
-    updateOldOwner.run('moderator', id, userId);
-
-    const updateNewOwner = db.prepare('UPDATE room_members SET role = ? WHERE room_id = ? AND user_id = ?');
-    updateNewOwner.run('admin', id, newOwnerId);
+    // The room's post moves with it: whoever owns the post can delete the room.
+    // The old owner becomes a moderator, the new owner an admin.
+    db.transaction(() => {
+      db.prepare('UPDATE rooms SET created_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newOwnerId, id);
+      db.prepare('UPDATE posts SET user_id = ? WHERE id = (SELECT post_id FROM rooms WHERE id = ?)').run(newOwnerId, id);
+      const setRole = db.prepare('UPDATE room_members SET role = ? WHERE room_id = ? AND user_id = ?');
+      setRole.run('moderator', id, userId);
+      setRole.run('admin', id, newOwnerId);
+    })();
 
     res.json({ message: 'Ownership transferred successfully' });
   } catch (err) {

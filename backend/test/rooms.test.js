@@ -20,6 +20,44 @@ const join = (person, roomId) => app.request('POST', `/api/rooms/${roomId}/join`
 const say = (person, roomId, content) =>
   app.request('POST', `/api/messages/${roomId}`, { token: person.token, body: { content } });
 
+test('a room can only be opened on your own room post, once', async () => {
+  const { roomId, postId } = await app.openRoom(owner);
+  assert.ok(roomId);
+
+  // Otherwise deleting the room would delete someone else's post.
+  const hijack = await app.request('POST', '/api/rooms', { token: outsider.token, body: { postId, name: 'Not mine' } });
+  assert.equal(hijack.status, 403);
+
+  const second = await app.request('POST', '/api/rooms', { token: owner.token, body: { postId, name: 'Second room' } });
+  assert.equal(second.status, 400);
+
+  const plain = await app.request('POST', '/api/posts', {
+    token: owner.token,
+    body: { title: 'Just a post', description: 'This post is not meant to hold a room.' },
+  });
+  const onPlain = await app.request('POST', '/api/rooms', {
+    token: owner.token,
+    body: { postId: plain.body.postId, name: 'Wrong post' },
+  });
+  assert.equal(onPlain.status, 400);
+});
+
+test('handing a room over hands over its post too', async () => {
+  const { roomId, postId } = await app.openRoom(owner);
+  await join(member, roomId);
+  const moved = await app.request('POST', `/api/rooms/${roomId}/transfer-ownership`, {
+    token: owner.token,
+    body: { newOwnerId: member.id },
+  });
+  assert.equal(moved.status, 200);
+
+  // The old owner can no longer delete the room by deleting its post.
+  assert.equal((await app.request('DELETE', `/api/posts/${postId}`, { token: owner.token })).status, 403);
+  assert.equal((await app.request('GET', `/api/rooms/${roomId}`)).status, 200);
+  assert.equal((await app.request('POST', `/api/rooms/${roomId}/leave`, { token: owner.token })).status, 200);
+  assert.equal((await app.request('DELETE', `/api/rooms/${roomId}`, { token: member.token })).status, 200);
+});
+
 test('only members can read or write inside a room', async () => {
   const { roomId } = await app.openRoom(owner);
   const token = outsider.token;
@@ -143,4 +181,13 @@ test('a task cannot be due before it starts', async () => {
     body: { title: 'Write the plan', start_date: '2026-05-01', end_date: '2026-05-10' },
   });
   assert.equal(good.status, 200);
+});
+
+test('changing a task that is not in the room is a 404, not a crash', async () => {
+  const { roomId } = await app.openRoom(owner);
+  const { status } = await app.request('PUT', `/api/tasks/${roomId}/999999`, {
+    token: owner.token,
+    body: { title: 'Ghost', start_date: '2026-05-01', end_date: '2026-05-02', status: 'DONE' },
+  });
+  assert.equal(status, 404);
 });

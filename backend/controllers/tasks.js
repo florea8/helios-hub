@@ -8,6 +8,9 @@ exports.setSocketInstance = (io) => {
   ioInstance = io;
 };
 
+// Members with the room open reload its task list.
+const announceTasks = (roomId) => ioInstance?.to(`room_${roomId}`).emit('room-tasks-changed', { roomId: Number(roomId) });
+
 // Get all tasks for a room
 exports.getTasks = (req, res) => {
   try {
@@ -80,6 +83,7 @@ exports.createTask = (req, res) => {
       }
     });
 
+    announceTasks(roomId);
     res.json({
       id: taskId,
       room_id: roomId,
@@ -106,7 +110,10 @@ exports.updateTask = (req, res) => {
 
     // Get current task info
     const currentTask = db.prepare('SELECT * FROM room_tasks WHERE id = ? AND room_id = ?').get(taskId, roomId);
-    
+    if (!currentTask) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
     const stmt = db.prepare(`
       UPDATE room_tasks
       SET title = ?, description = ?, start_date = ?, end_date = ?, priority = ?, status = ?, updated_at = CURRENT_TIMESTAMP
@@ -163,6 +170,7 @@ exports.updateTask = (req, res) => {
       }
     });
 
+    announceTasks(roomId);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -180,8 +188,11 @@ exports.toggleTask = (req, res) => {
       SET status = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND room_id = ?
     `);
-    stmt.run(status, taskId, roomId);
+    if (stmt.run(status, taskId, roomId).changes === 0) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
 
+    announceTasks(roomId);
     res.json({ success: true, status });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -194,8 +205,11 @@ exports.deleteTask = (req, res) => {
     const { roomId, taskId } = req.params;
 
     const stmt = db.prepare('DELETE FROM room_tasks WHERE id = ? AND room_id = ?');
-    stmt.run(taskId, roomId);
+    if (stmt.run(taskId, roomId).changes === 0) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
 
+    announceTasks(roomId);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
